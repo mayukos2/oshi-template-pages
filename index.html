@@ -177,8 +177,10 @@
     }
 
     .template-card.is-selected {
-      border-color: var(--accent);
-      box-shadow: var(--shadow);
+      border-color: var(--accent-dark);
+      border-width: 2px;
+      background: linear-gradient(135deg, rgba(129,121,184,.18), rgba(232,180,195,.16)), #fff;
+      box-shadow: 0 0 0 4px rgba(129,121,184,.14), var(--shadow);
     }
 
     .template-thumb {
@@ -213,6 +215,23 @@
       font-weight: 900;
       box-shadow: 0 8px 18px rgba(60, 52, 80, .12);
     }
+
+    .template-selected-label {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+      min-height: 30px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-dark);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(60, 52, 80, .18);
+    }
+
+    .template-card.is-selected .template-selected-label { display: inline-flex; }
 
     .template-info {
       padding: 12px 4px 2px;
@@ -486,7 +505,8 @@
     .photo-tab {
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 8px 12px;
+      min-height: 44px;
+      padding: 10px 14px;
       background: #fff;
       color: var(--muted);
       font-size: 12px;
@@ -505,13 +525,49 @@
       grid-template-columns: 54px 1fr;
       gap: 12px;
       align-items: center;
+      min-height: 48px;
       color: var(--text);
       font-weight: 900;
     }
 
     .range-field input {
       width: 100%;
+      min-height: 42px;
       accent-color: var(--accent);
+    }
+
+    .range-field input::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .range-field input::-webkit-slider-thumb {
+      width: 28px;
+      height: 28px;
+      margin-top: -10px;
+    }
+
+    .quick-adjust {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 8px 0 2px;
+    }
+
+    .quick-adjust button {
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--accent-dark);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .quick-adjust button:active {
+      transform: translateY(1px);
+      background: #f2eef8;
     }
 
     .preview-summary dl { margin: 0; }
@@ -596,6 +652,8 @@
       .primary-button, .secondary-button { flex: 1; padding-left: 12px; padding-right: 12px; }
       .preview-label small { display: none; }
       .range-field { grid-template-columns: 46px 1fr; }
+      .photo-tab { min-height: 48px; padding-left: 16px; padding-right: 16px; font-size: 13px; }
+      .quick-adjust button { min-height: 50px; }
     }
   </style>
 </head>
@@ -690,6 +748,14 @@
             <label class="range-field"><span>拡大</span><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /></label>
             <label class="range-field"><span>左右</span><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
             <label class="range-field"><span>上下</span><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
+            <div class="quick-adjust" aria-label="写真のかんたん調整">
+              <button type="button" data-adjust="zoom-out">小さく</button>
+              <button type="button" data-adjust="up">上へ</button>
+              <button type="button" data-adjust="zoom-in">大きく</button>
+              <button type="button" data-adjust="left">左へ</button>
+              <button type="button" data-adjust="down">下へ</button>
+              <button type="button" data-adjust="right">右へ</button>
+            </div>
             <button id="resetPhotoBtn" class="text-button" type="button">この写真の位置をリセット</button>
           </div>
 
@@ -720,10 +786,10 @@
         count: 4,
         src: 'assets/templates/template-4.jpg',
         slots: [
-          { type: 'rect', x: 486, y: 278, w: 318, h: 112, rotate: 0.28 },
-          { type: 'rect', x: 430, y: 472, w: 318, h: 112, rotate: 0.28 },
-          { type: 'rect', x: 373, y: 666, w: 318, h: 112, rotate: 0.28 },
-          { type: 'rect', x: 317, y: 862, w: 318, h: 112, rotate: 0.28 }
+          { type: 'rect', x: 480, y: 306, w: 326, h: 160, rotate: 0.28 },
+          { type: 'rect', x: 424, y: 500, w: 326, h: 160, rotate: 0.28 },
+          { type: 'rect', x: 368, y: 694, w: 326, h: 160, rotate: 0.28 },
+          { type: 'rect', x: 312, y: 890, w: 326, h: 160, rotate: 0.28 }
         ]
       },
       {
@@ -837,6 +903,7 @@
           <div class="template-thumb">
             <img src="${template.src}" alt="${template.name}の見本" />
             <span class="template-count">写真${template.count}枚</span>
+            <span class="template-selected-label">選択中</span>
           </div>
           <div class="template-info">
             <strong>${template.name}</strong>
@@ -990,6 +1057,25 @@
       syncControlsFromPhoto();
       render();
       showToast('写真位置をリセットしました');
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function quickAdjust(action) {
+      const photo = activePhoto();
+      if (!photo) return;
+      const moveStep = 0.08;
+      const zoomStep = 0.08;
+      if (action === 'left') photo.x = clamp(photo.x - moveStep, -1, 1);
+      if (action === 'right') photo.x = clamp(photo.x + moveStep, -1, 1);
+      if (action === 'up') photo.y = clamp(photo.y - moveStep, -1, 1);
+      if (action === 'down') photo.y = clamp(photo.y + moveStep, -1, 1);
+      if (action === 'zoom-in') photo.zoom = clamp(photo.zoom + zoomStep, 1, 2.8);
+      if (action === 'zoom-out') photo.zoom = clamp(photo.zoom - zoomStep, 1, 2.8);
+      syncControlsFromPhoto();
+      render();
     }
 
     function updateSummary() {
@@ -1147,6 +1233,9 @@
     els.messageInput.addEventListener('input', () => { updateMessageCount(); if (state.stage === 'preview') render(); });
     [els.zoomInput, els.xInput, els.yInput].forEach(input => input.addEventListener('input', updateActivePhotoFromControls));
     els.resetPhotoBtn.addEventListener('click', resetActivePhoto);
+    document.querySelectorAll('[data-adjust]').forEach(button => {
+      button.addEventListener('click', () => quickAdjust(button.dataset.adjust));
+    });
     els.downloadBtn.addEventListener('click', downloadImage);
     canvas.addEventListener('pointerdown', startDrag);
     canvas.addEventListener('pointermove', moveDrag);
