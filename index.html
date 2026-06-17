@@ -432,12 +432,19 @@
       font-weight: 800;
     }
 
-    .screen-actions {
+    .screen-actions,
+    .back-actions {
       max-width: 760px;
       margin: 18px auto 0;
       display: flex;
       gap: 12px;
       justify-content: center;
+    }
+
+    .back-actions {
+      margin-top: -8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
     }
 
     .primary-button,
@@ -466,6 +473,17 @@
       opacity: .52;
       cursor: not-allowed;
       box-shadow: none;
+    }
+
+    .danger-button {
+      min-height: 52px;
+      border: 1px solid rgba(231, 91, 159, .3);
+      border-radius: 8px;
+      padding: 14px 22px;
+      background: #fff7fb;
+      color: var(--pink-strong);
+      font-weight: 900;
+      cursor: pointer;
     }
 
     .preview-layout {
@@ -680,6 +698,18 @@
         backdrop-filter: blur(12px);
       }
       .primary-button, .secondary-button { flex: 1; padding-left: 12px; padding-right: 12px; }
+      .back-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .back-actions .secondary-button,
+      .back-actions .danger-button {
+        width: 100%;
+        min-height: 48px;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+      .back-actions .danger-button { grid-column: 1 / -1; }
       .preview-label small { display: none; }
       .range-field { grid-template-columns: 46px 1fr; }
       .photo-tab { min-height: 48px; padding-left: 16px; padding-right: 16px; font-size: 13px; }
@@ -692,9 +722,9 @@
     <div>
       <p class="eyebrow">OSHIKATSU TEMPLATE MAKER</p>
       <h1>テンプレを選んで<br />写真を入れる</h1>
-      <p class="sub">写真枚数が違うテンプレにも対応しました。</p>
+      <p class="sub">ピンクの部分に写真を入れるシンプル版です。</p>
     </div>
-    <div class="badge">お試し版 v5</div>
+    <div class="badge">お試し版 v6</div>
   </header>
 
   <nav class="progress" aria-label="作成ステップ">
@@ -710,7 +740,7 @@
       <div class="screen-heading">
         <p class="screen-step">STEP 1</p>
         <h2 id="templateHeading">テンプレを選ぶ</h2>
-        <p>ピンクの部分に写真が入ります。フィルムは白いコマに入ります。</p>
+        <p>まずは3つのテンプレだけ。ピンクの部分に写真が入ります。</p>
       </div>
       <div id="templateGrid" class="template-grid"></div>
       <div class="screen-actions">
@@ -731,7 +761,7 @@
             <span>選択中のテンプレ</span>
             <strong id="selectedTemplateName"></strong>
           </div>
-          <button id="changeTemplateBtn" class="text-button" type="button">戻る</button>
+          <button id="changeTemplateBtn" class="secondary-button" type="button">テンプレを選び直す</button>
         </div>
 
         <div class="section-card">
@@ -746,7 +776,7 @@
       </div>
 
       <div class="screen-actions">
-        <button id="backTemplatesBtn" class="secondary-button" type="button">戻る</button>
+        <button id="backTemplatesBtn" class="secondary-button" type="button">テンプレを選び直す</button>
         <button id="toPreviewBtn" class="primary-button" type="button">プレビューで確認する</button>
       </div>
     </section>
@@ -756,6 +786,12 @@
         <p class="screen-step">STEP 3</p>
         <h2 id="previewHeading">プレビューで調整する</h2>
         <p>写真ごとに位置と大きさを整えて保存できます。</p>
+      </div>
+
+      <div class="back-actions">
+        <button id="previewTemplateBtn" class="secondary-button" type="button">テンプレを選び直す</button>
+        <button id="previewInputBtn" class="secondary-button" type="button">写真を選び直す</button>
+        <button id="restartBtn" class="danger-button" type="button">最初からやり直す</button>
       </div>
 
       <div class="preview-layout">
@@ -791,7 +827,7 @@
               <div><dt>テンプレ</dt><dd id="summaryTemplate"></dd></div>
               <div><dt>写真</dt><dd id="summaryPhotos"></dd></div>
             </dl>
-            <button id="editInputBtn" class="secondary-button" type="button">写真を修正する</button>
+            <button id="editInputBtn" class="secondary-button" type="button">写真を選び直す</button>
           </div>
 
           <button id="downloadBtn" class="primary-button save-button" type="button">完成画像を保存する</button>
@@ -807,14 +843,14 @@
       {
         id: 'four',
         name: '4枚テンプレ',
-        description: '縦に並ぶフィルム風',
+        description: '縦に並ぶ4枚写真',
         count: 4,
         src: 'assets/templates/template-4.jpg',
         slots: [
-          { type: 'rect', x: 480, y: 265, w: 335, h: 196, rotate: 0.28 },
-          { type: 'rect', x: 425, y: 458, w: 335, h: 190, rotate: 0.28 },
-          { type: 'rect', x: 369, y: 652, w: 326, h: 162, rotate: 0.28 },
-          { type: 'rect', x: 313, y: 846, w: 326, h: 160, rotate: 0.28 }
+          { type: 'poly', points: [[368, 126], [650, 218], [590, 405], [307, 314]] },
+          { type: 'poly', points: [[292, 368], [575, 459], [515, 646], [232, 555]] },
+          { type: 'poly', points: [[218, 601], [501, 694], [441, 879], [157, 788]] },
+          { type: 'poly', points: [[138, 845], [421, 937], [360, 1123], [77, 1030]] }
         ]
       },
       {
@@ -824,9 +860,9 @@
         count: 3,
         src: 'assets/templates/template-3.jpg',
         slots: [
-          { type: 'circle', x: 224, y: 252, r: 164 },
-          { type: 'circle', x: 503, y: 638, r: 164 },
-          { type: 'circle', x: 224, y: 1015, r: 164 }
+          { type: 'circle', x: 220, y: 259, r: 168 },
+          { type: 'circle', x: 502, y: 640, r: 168 },
+          { type: 'circle', x: 218, y: 1050, r: 168 }
         ]
       },
       {
@@ -836,52 +872,7 @@
         count: 1,
         src: 'assets/templates/template-1.jpg',
         slots: [
-          { type: 'roundRect', x: 174, y: 303, w: 489, h: 626, radius: 0 }
-        ]
-      },
-      {
-        id: 'collage',
-        name: '18枚コラージュ',
-        description: 'ハート型に写真を並べる',
-        count: 18,
-        src: 'assets/templates/template-collage.jpg',
-        slots: [
-          { type: 'roundRect', x: 34, y: 438, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 34, y: 535, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 132, y: 344, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 226, y: 344, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 131, y: 438, w: 177, h: 177, radius: 0 },
-          { type: 'roundRect', x: 324, y: 438, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 130, y: 627, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 225, y: 627, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 416, y: 343, w: 180, h: 177, radius: 0 },
-          { type: 'roundRect', x: 608, y: 438, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 320, y: 532, w: 181, h: 178, radius: 0 },
-          { type: 'roundRect', x: 512, y: 532, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 609, y: 535, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 512, y: 626, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 225, y: 722, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 321, y: 722, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 417, y: 722, w: 82, h: 82, radius: 0 },
-          { type: 'roundRect', x: 321, y: 820, w: 82, h: 82, radius: 0 }
-        ]
-      },
-      {
-        id: 'film',
-        name: 'フィルムテンプレ',
-        description: '白いコマに写真を配置',
-        count: 9,
-        src: 'assets/templates/template-film.jpg',
-        slots: [
-          { type: 'poly', points: [[170,146],[310,126],[288,306],[130,310]] },
-          { type: 'poly', points: [[337,122],[494,105],[462,302],[307,304]] },
-          { type: 'poly', points: [[500,104],[704,96],[664,310],[470,303]] },
-          { type: 'poly', points: [[80,334],[214,407],[174,544],[0,478]] },
-          { type: 'poly', points: [[235,421],[396,480],[354,654],[192,594]] },
-          { type: 'poly', points: [[424,492],[590,554],[548,729],[382,666]] },
-          { type: 'poly', points: [[124,784],[285,797],[277,940],[116,908]] },
-          { type: 'poly', points: [[312,801],[489,802],[469,964],[294,943]] },
-          { type: 'poly', points: [[516,803],[704,795],[665,978],[489,964]] }
+          { type: 'roundRect', x: 174, y: 302, w: 488, h: 626, radius: 0 }
         ]
       }
     ];
@@ -909,6 +900,9 @@
       yInput: document.getElementById('yInput'),
       resetPhotoBtn: document.getElementById('resetPhotoBtn'),
       editInputBtn: document.getElementById('editInputBtn'),
+      previewTemplateBtn: document.getElementById('previewTemplateBtn'),
+      previewInputBtn: document.getElementById('previewInputBtn'),
+      restartBtn: document.getElementById('restartBtn'),
       summaryTemplate: document.getElementById('summaryTemplate'),
       summaryPhotos: document.getElementById('summaryPhotos'),
       downloadBtn: document.getElementById('downloadBtn'),
@@ -1126,6 +1120,26 @@
       showToast('写真位置をリセットしました');
     }
 
+    function clearPhotos() {
+      state.photos.forEach(photo => {
+        if (photo.url) URL.revokeObjectURL(photo.url);
+      });
+      state.photos = [];
+      state.activePhoto = 0;
+      ensurePhotoSlots();
+    }
+
+    function restart() {
+      state.templateId = 'four';
+      clearPhotos();
+      renderTemplates();
+      renderInput();
+      renderPreviewControls();
+      setStage('templates');
+      render();
+      showToast('最初からやり直せます');
+    }
+
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
     }
@@ -1289,8 +1303,11 @@
     els.toInputBtn.addEventListener('click', () => setStage('input'));
     els.backTemplatesBtn.addEventListener('click', () => setStage('templates'));
     els.changeTemplateBtn.addEventListener('click', () => setStage('templates'));
+    els.previewTemplateBtn.addEventListener('click', () => setStage('templates'));
+    els.previewInputBtn.addEventListener('click', () => setStage('input'));
     els.toPreviewBtn.addEventListener('click', () => { if (canOpenPreview()) setStage('preview'); });
     els.editInputBtn.addEventListener('click', () => setStage('input'));
+    els.restartBtn.addEventListener('click', restart);
     els.bulkPhotoInput.addEventListener('change', event => loadPhotos(event.target.files));
     [els.zoomInput, els.xInput, els.yInput].forEach(input => input.addEventListener('input', updateActivePhotoFromControls));
     els.resetPhotoBtn.addEventListener('click', resetActivePhoto);
