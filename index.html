@@ -8,14 +8,15 @@
   <link rel="icon" href="data:," />
   <style>
     :root {
-      --bg: #f7f3fb;
+      --bg: #f0e9f8;
       --card: rgba(255,255,255,.92);
       --text: #504b59;
       --muted: #878092;
       --line: #e6e0ee;
       --accent: #8179b8;
       --accent-dark: #655f9f;
-      --pink: #e8b4c3;
+      --pink: #f5a8c9;
+      --pink-strong: #e75b9f;
       --shadow: 0 18px 48px rgba(72, 60, 98, .14);
     }
 
@@ -27,9 +28,9 @@
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
       background:
-        radial-gradient(circle at 10% 6%, rgba(159, 145, 214, .16), transparent 28%),
-        radial-gradient(circle at 92% 16%, rgba(232, 180, 195, .22), transparent 24%),
-        linear-gradient(180deg, #fdfbff 0%, #f6f1fb 100%);
+        radial-gradient(circle at 10% 6%, rgba(129, 121, 184, .18), transparent 28%),
+        radial-gradient(circle at 92% 16%, rgba(231, 91, 159, .16), transparent 24%),
+        linear-gradient(180deg, #f5effb 0%, #eee6f7 100%);
     }
 
     h1, h2, h3, p { margin-top: 0; }
@@ -169,18 +170,20 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 12px;
-      background: var(--card);
+      background: #fff;
       color: var(--text);
       text-align: left;
-      box-shadow: 0 12px 34px rgba(85,77,106,.08);
+      box-shadow: 0 12px 34px rgba(85,77,106,.14);
       cursor: pointer;
     }
 
     .template-card.is-selected {
-      border-color: var(--accent-dark);
-      border-width: 2px;
-      background: linear-gradient(135deg, rgba(129,121,184,.18), rgba(232,180,195,.16)), #fff;
-      box-shadow: 0 0 0 4px rgba(129,121,184,.14), var(--shadow);
+      border-color: var(--pink-strong);
+      border-width: 3px;
+      background:
+        linear-gradient(135deg, rgba(255, 232, 243, .98), rgba(255, 215, 234, .96)),
+        #ffe7f2;
+      box-shadow: 0 0 0 5px rgba(231, 91, 159, .22), 0 18px 44px rgba(180, 76, 130, .22);
     }
 
     .template-thumb {
@@ -224,7 +227,7 @@
       min-height: 30px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: var(--accent-dark);
+      background: var(--pink-strong);
       color: #fff;
       font-size: 12px;
       font-weight: 900;
