@@ -323,6 +323,33 @@
       gap: 12px;
     }
 
+    .bulk-upload {
+      position: relative;
+      display: grid;
+      gap: 4px;
+      min-height: 68px;
+      margin-bottom: 14px;
+      border: 2px solid rgba(231,91,159,.34);
+      border-radius: 8px;
+      padding: 13px 16px;
+      background: linear-gradient(135deg, #ffe7f2, #fff7fb);
+      color: var(--pink-strong);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .bulk-upload input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .bulk-upload small {
+      color: #8f6b82;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .upload-box {
       position: relative;
       display: grid;
@@ -667,13 +694,13 @@
       <h1>テンプレを選んで<br />写真を入れる</h1>
       <p class="sub">写真枚数が違うテンプレにも対応しました。</p>
     </div>
-    <div class="badge">お試し版 v4</div>
+    <div class="badge">お試し版 v5</div>
   </header>
 
   <nav class="progress" aria-label="作成ステップ">
     <button class="progress-step" type="button" data-go="templates"><span>1</span>テンプレ</button>
     <i></i>
-    <button class="progress-step" type="button" data-go="input"><span>2</span>写真・文字</button>
+    <button class="progress-step" type="button" data-go="input"><span>2</span>写真</button>
     <i></i>
     <button class="progress-step" type="button" data-go="preview"><span>3</span>調整・保存</button>
   </nav>
@@ -683,7 +710,7 @@
       <div class="screen-heading">
         <p class="screen-step">STEP 1</p>
         <h2 id="templateHeading">テンプレを選ぶ</h2>
-        <p>4枚・3枚・1枚のテンプレから選べます。</p>
+        <p>ピンクの部分に写真が入ります。フィルムは白いコマに入ります。</p>
       </div>
       <div id="templateGrid" class="template-grid"></div>
       <div class="screen-actions">
@@ -695,7 +722,7 @@
       <div class="screen-heading">
         <p class="screen-step">STEP 2</p>
         <h2 id="inputHeading">写真を入れる</h2>
-        <p>選んだテンプレに必要な枚数だけアップロードできます。</p>
+        <p>まとめて選ぶと、写真1から順番に入ります。</p>
       </div>
 
       <div class="input-layout">
@@ -709,16 +736,12 @@
 
         <div class="section-card">
           <div class="section-title-row"><span class="mini-step">1</span><h3>写真を選ぶ</h3></div>
-          <div id="uploadList" class="upload-list"></div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-title-row"><span class="mini-step">2</span><h3>文字を入れる</h3></div>
-          <label class="field">
-            <span>任意メモ</span>
-            <textarea id="messageInput" maxlength="80" placeholder="入れたいときだけ入力できます"></textarea>
-            <small><span id="messageCount">0</span>/80</small>
+          <label class="bulk-upload" for="bulkPhotoInput">
+            <input id="bulkPhotoInput" type="file" accept="image/*" multiple />
+            <span>まとめて写真を選ぶ</span>
+            <small>選んだ順に写真枠へ入ります</small>
           </label>
+          <div id="uploadList" class="upload-list"></div>
         </div>
       </div>
 
@@ -767,9 +790,8 @@
             <dl>
               <div><dt>テンプレ</dt><dd id="summaryTemplate"></dd></div>
               <div><dt>写真</dt><dd id="summaryPhotos"></dd></div>
-              <div><dt>文字</dt><dd id="summaryMessage"></dd></div>
             </dl>
-            <button id="editInputBtn" class="secondary-button" type="button">写真・文字を修正する</button>
+            <button id="editInputBtn" class="secondary-button" type="button">写真を修正する</button>
           </div>
 
           <button id="downloadBtn" class="primary-button save-button" type="button">完成画像を保存する</button>
@@ -785,14 +807,14 @@
       {
         id: 'four',
         name: '4枚テンプレ',
-        description: '縦に並ぶチェキ風',
+        description: '縦に並ぶフィルム風',
         count: 4,
         src: 'assets/templates/template-4.jpg',
         slots: [
-          { type: 'rect', x: 480, y: 306, w: 326, h: 160, rotate: 0.28 },
-          { type: 'rect', x: 424, y: 500, w: 326, h: 160, rotate: 0.28 },
-          { type: 'rect', x: 368, y: 694, w: 326, h: 160, rotate: 0.28 },
-          { type: 'rect', x: 312, y: 890, w: 326, h: 160, rotate: 0.28 }
+          { type: 'rect', x: 480, y: 265, w: 335, h: 196, rotate: 0.28 },
+          { type: 'rect', x: 425, y: 458, w: 335, h: 190, rotate: 0.28 },
+          { type: 'rect', x: 369, y: 652, w: 326, h: 162, rotate: 0.28 },
+          { type: 'rect', x: 313, y: 846, w: 326, h: 160, rotate: 0.28 }
         ]
       },
       {
@@ -802,9 +824,9 @@
         count: 3,
         src: 'assets/templates/template-3.jpg',
         slots: [
-          { type: 'circle', x: 222, y: 248, r: 168 },
-          { type: 'circle', x: 502, y: 636, r: 172 },
-          { type: 'circle', x: 223, y: 1016, r: 170 }
+          { type: 'circle', x: 224, y: 252, r: 164 },
+          { type: 'circle', x: 503, y: 638, r: 164 },
+          { type: 'circle', x: 224, y: 1015, r: 164 }
         ]
       },
       {
@@ -814,7 +836,52 @@
         count: 1,
         src: 'assets/templates/template-1.jpg',
         slots: [
-          { type: 'roundRect', x: 126, y: 338, w: 560, h: 676, radius: 18 }
+          { type: 'roundRect', x: 174, y: 303, w: 489, h: 626, radius: 0 }
+        ]
+      },
+      {
+        id: 'collage',
+        name: '18枚コラージュ',
+        description: 'ハート型に写真を並べる',
+        count: 18,
+        src: 'assets/templates/template-collage.jpg',
+        slots: [
+          { type: 'roundRect', x: 34, y: 438, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 34, y: 535, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 132, y: 344, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 226, y: 344, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 131, y: 438, w: 177, h: 177, radius: 0 },
+          { type: 'roundRect', x: 324, y: 438, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 130, y: 627, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 225, y: 627, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 416, y: 343, w: 180, h: 177, radius: 0 },
+          { type: 'roundRect', x: 608, y: 438, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 320, y: 532, w: 181, h: 178, radius: 0 },
+          { type: 'roundRect', x: 512, y: 532, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 609, y: 535, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 512, y: 626, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 225, y: 722, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 321, y: 722, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 417, y: 722, w: 82, h: 82, radius: 0 },
+          { type: 'roundRect', x: 321, y: 820, w: 82, h: 82, radius: 0 }
+        ]
+      },
+      {
+        id: 'film',
+        name: 'フィルムテンプレ',
+        description: '白いコマに写真を配置',
+        count: 9,
+        src: 'assets/templates/template-film.jpg',
+        slots: [
+          { type: 'poly', points: [[170,146],[310,126],[288,306],[130,310]] },
+          { type: 'poly', points: [[337,122],[494,105],[462,302],[307,304]] },
+          { type: 'poly', points: [[500,104],[704,96],[664,310],[470,303]] },
+          { type: 'poly', points: [[80,334],[214,407],[174,544],[0,478]] },
+          { type: 'poly', points: [[235,421],[396,480],[354,654],[192,594]] },
+          { type: 'poly', points: [[424,492],[590,554],[548,729],[382,666]] },
+          { type: 'poly', points: [[124,784],[285,797],[277,940],[116,908]] },
+          { type: 'poly', points: [[312,801],[489,802],[469,964],[294,943]] },
+          { type: 'poly', points: [[516,803],[704,795],[665,978],[489,964]] }
         ]
       }
     ];
@@ -831,9 +898,8 @@
       templateGrid: document.getElementById('templateGrid'),
       toInputBtn: document.getElementById('toInputBtn'),
       selectedTemplateName: document.getElementById('selectedTemplateName'),
+      bulkPhotoInput: document.getElementById('bulkPhotoInput'),
       uploadList: document.getElementById('uploadList'),
-      messageInput: document.getElementById('messageInput'),
-      messageCount: document.getElementById('messageCount'),
       backTemplatesBtn: document.getElementById('backTemplatesBtn'),
       changeTemplateBtn: document.getElementById('changeTemplateBtn'),
       toPreviewBtn: document.getElementById('toPreviewBtn'),
@@ -845,7 +911,6 @@
       editInputBtn: document.getElementById('editInputBtn'),
       summaryTemplate: document.getElementById('summaryTemplate'),
       summaryPhotos: document.getElementById('summaryPhotos'),
-      summaryMessage: document.getElementById('summaryMessage'),
       downloadBtn: document.getElementById('downloadBtn'),
       toast: document.getElementById('toast')
     };
@@ -856,7 +921,6 @@
       templateId: 'four',
       photos: [],
       activePhoto: 0,
-      message: '',
       drag: null
     };
 
@@ -969,7 +1033,6 @@
         input.addEventListener('change', event => loadPhoto(index, event.target.files?.[0]));
         els.uploadList.appendChild(label);
       });
-      updateMessageCount();
     }
 
     function loadPhoto(index, file) {
@@ -997,6 +1060,12 @@
       img.src = photo.url;
     }
 
+    function loadPhotos(files) {
+      Array.from(files || []).slice(0, currentTemplate().count).forEach((file, index) => {
+        loadPhoto(index, file);
+      });
+    }
+
     function canOpenPreview() {
       ensurePhotoSlots();
       const missingIndex = state.photos.findIndex(photo => !photo.image);
@@ -1005,11 +1074,6 @@
         return false;
       }
       return true;
-    }
-
-    function updateMessageCount() {
-      state.message = els.messageInput.value;
-      els.messageCount.textContent = String(state.message.length);
     }
 
     function renderPreviewControls() {
@@ -1085,7 +1149,6 @@
       const template = currentTemplate();
       els.summaryTemplate.textContent = template.name;
       els.summaryPhotos.textContent = `${state.photos.filter(photo => photo.image).length}/${template.count}枚セット済み`;
-      els.summaryMessage.textContent = state.message || 'なし';
     }
 
     function roundedRectPath(context, x, y, width, height, radius) {
@@ -1140,27 +1203,23 @@
         ctx.clip();
         drawCover(photo.image, slot.w, slot.h, photo);
       }
-      ctx.restore();
-    }
-
-    function drawMessage() {
-      const text = state.message.trim();
-      if (!text) return;
-      const lines = text.split(/\n/).slice(0, 2);
-      ctx.save();
-      ctx.fillStyle = 'rgba(255,255,255,.86)';
-      ctx.strokeStyle = 'rgba(80,75,89,.12)';
-      ctx.lineWidth = 2;
-      roundedRectPath(ctx, 52, 1108, 616, 104, 26);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#504b59';
-      ctx.font = '700 25px -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      lines.forEach((line, index) => {
-        ctx.fillText(line, 360, 1144 + index * 34, 560);
-      });
+      if (slot.type === 'poly') {
+        const xs = slot.points.map(point => point[0]);
+        const ys = slot.points.map(point => point[1]);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        ctx.beginPath();
+        slot.points.forEach(([x, y], index) => {
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.clip();
+        ctx.translate((minX + maxX) / 2, (minY + maxY) / 2);
+        drawCover(photo.image, maxX - minX, maxY - minY, photo);
+      }
       ctx.restore();
     }
 
@@ -1170,7 +1229,6 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
       template.slots.forEach((slot, index) => drawPhotoInSlot(state.photos[index], slot));
-      drawMessage();
       updateSummary();
     }
 
@@ -1233,7 +1291,7 @@
     els.changeTemplateBtn.addEventListener('click', () => setStage('templates'));
     els.toPreviewBtn.addEventListener('click', () => { if (canOpenPreview()) setStage('preview'); });
     els.editInputBtn.addEventListener('click', () => setStage('input'));
-    els.messageInput.addEventListener('input', () => { updateMessageCount(); if (state.stage === 'preview') render(); });
+    els.bulkPhotoInput.addEventListener('change', event => loadPhotos(event.target.files));
     [els.zoomInput, els.xInput, els.yInput].forEach(input => input.addEventListener('input', updateActivePhotoFromControls));
     els.resetPhotoBtn.addEventListener('click', resetActivePhoto);
     document.querySelectorAll('[data-adjust]').forEach(button => {
