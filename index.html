@@ -1000,7 +1000,13 @@
       });
     }
 
-    function setStage(stage) {
+    function scrollToStage(stage) {
+      const target = els.screens[stage] || els.screens.templates;
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - 12);
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+
+    function setStage(stage, shouldScroll = true) {
       if (stage === 'preview' && !canOpenPreview()) return;
       state.stage = stage;
       Object.entries(els.screens).forEach(([key, screen]) => {
@@ -1019,7 +1025,7 @@
         updateSummary();
         render();
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (shouldScroll) scrollToStage(stage);
     }
 
     function renderInput() {
@@ -1363,7 +1369,7 @@
 
     renderTemplates();
     ensurePhotoSlots();
-    setStage('templates');
+    setStage('templates', false);
     loadImage(currentTemplate().src).then(render);
   </script>
 </body>
