@@ -724,7 +724,7 @@
       <h1>テンプレを選んで<br />写真を入れる</h1>
       <p class="sub">ピンクの部分に写真を入れるシンプル版です。</p>
     </div>
-    <div class="badge">お試し版 v6</div>
+    <div class="badge">お試し版 v7</div>
   </header>
 
   <nav class="progress" aria-label="作成ステップ">
@@ -847,10 +847,10 @@
         count: 4,
         src: 'assets/templates/template-4.jpg',
         slots: [
-          { type: 'poly', points: [[368, 126], [650, 218], [590, 405], [307, 314]] },
-          { type: 'poly', points: [[292, 368], [575, 459], [515, 646], [232, 555]] },
-          { type: 'poly', points: [[218, 601], [501, 694], [441, 879], [157, 788]] },
-          { type: 'poly', points: [[138, 845], [421, 937], [360, 1123], [77, 1030]] }
+          { type: 'poly', bleed: 8, points: [[368, 126], [650, 218], [590, 405], [307, 314]] },
+          { type: 'poly', bleed: 8, points: [[292, 368], [575, 459], [515, 646], [232, 555]] },
+          { type: 'poly', bleed: 8, points: [[218, 601], [501, 694], [441, 879], [157, 788]] },
+          { type: 'poly', bleed: 8, points: [[138, 845], [421, 937], [360, 1123], [77, 1030]] }
         ]
       },
       {
@@ -1193,6 +1193,27 @@
       ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
     }
 
+    function distanceBetween(a, b) {
+      return Math.hypot(b[0] - a[0], b[1] - a[1]);
+    }
+
+    function expandPolygon(points, amount = 0) {
+      if (!amount) return points;
+      const center = points.reduce((sum, point) => ({
+        x: sum.x + point[0] / points.length,
+        y: sum.y + point[1] / points.length
+      }), { x: 0, y: 0 });
+      return points.map(([x, y]) => {
+        const dx = x - center.x;
+        const dy = y - center.y;
+        const length = Math.hypot(dx, dy) || 1;
+        return [
+          x + (dx / length) * amount,
+          y + (dy / length) * amount
+        ];
+      });
+    }
+
     function drawPhotoInSlot(photo, slot) {
       if (!photo?.image) return;
       ctx.save();
@@ -1218,21 +1239,23 @@
         drawCover(photo.image, slot.w, slot.h, photo);
       }
       if (slot.type === 'poly') {
-        const xs = slot.points.map(point => point[0]);
-        const ys = slot.points.map(point => point[1]);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
+        const points = expandPolygon(slot.points, slot.bleed || 0);
+        const [topLeft, topRight, bottomRight, bottomLeft] = points;
+        const centerX = points.reduce((sum, point) => sum + point[0], 0) / points.length;
+        const centerY = points.reduce((sum, point) => sum + point[1], 0) / points.length;
+        const width = (distanceBetween(topLeft, topRight) + distanceBetween(bottomLeft, bottomRight)) / 2;
+        const height = (distanceBetween(topLeft, bottomLeft) + distanceBetween(topRight, bottomRight)) / 2;
+        const angle = Math.atan2(topRight[1] - topLeft[1], topRight[0] - topLeft[0]);
         ctx.beginPath();
-        slot.points.forEach(([x, y], index) => {
+        points.forEach(([x, y], index) => {
           if (index === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
         ctx.closePath();
         ctx.clip();
-        ctx.translate((minX + maxX) / 2, (minY + maxY) / 2);
-        drawCover(photo.image, maxX - minX, maxY - minY, photo);
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+        drawCover(photo.image, width, height, photo);
       }
       ctx.restore();
     }
