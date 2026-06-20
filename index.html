@@ -654,6 +654,19 @@
 
     .save-button { width: 100%; }
 
+    .rights-notice {
+      max-width: 760px;
+      margin: 28px auto 0;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.72);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.8;
+    }
+
     .toast {
       position: fixed;
       left: 50%;
@@ -851,6 +864,10 @@
         </div>
       </div>
     </section>
+
+    <section class="rights-notice" aria-label="権利に関する注意書き">
+      本サービスのテンプレートは、非公式のファンメイド向けオリジナルデザインです。実在のアーティスト、グループ、事務所、公式商品とは関係ありません。公式ロゴ、公式写真、配信スクリーンショット、第三者の著作物を無断で使用しないでください。ご自身で撮影した写真、利用許可のある素材、または権利上問題のない素材を使用してください。
+    </section>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -885,7 +902,7 @@
       {
         id: 'one',
         name: '1枚テンプレ',
-        description: '大きく見せるチケット風',
+        description: '1枚写真を大きく見せる',
         count: 1,
         src: 'assets/templates/template-1.jpg',
         slots: [

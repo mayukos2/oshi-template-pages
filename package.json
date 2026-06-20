@@ -1,0 +1,10 @@
+{
+  "name": "oshi-template-pages",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "rights:check": "node scripts/rights-check.js",
+    "prebuild": "npm run rights:check",
+    "build": "node scripts/static-build.js"
+  }
+}

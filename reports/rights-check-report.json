@@ -1,0 +1,92 @@
+[
+  {
+    "file": "assets/fv.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "ai-generated without real names or existing works"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-1.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "reviewed medium signal: バーコード",
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-3.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-4.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-collage.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-film.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "index.html public text",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "no risky wording detected in public page text"
+    ],
+    "recommendation": "publish ok"
+  }
+]
