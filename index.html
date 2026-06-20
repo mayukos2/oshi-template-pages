@@ -418,6 +418,15 @@
       white-space: nowrap;
     }
 
+    .text-slot-section[hidden] {
+      display: none !important;
+    }
+
+    .text-slot-list {
+      display: grid;
+      gap: 12px;
+    }
+
     .field {
       display: grid;
       gap: 8px;
@@ -428,16 +437,25 @@
       font-weight: 900;
     }
 
+    .field input,
     textarea {
       width: 100%;
-      min-height: 96px;
-      resize: vertical;
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 13px 14px;
       background: #fff;
       color: var(--text);
       line-height: 1.7;
+    }
+
+    .field input {
+      min-height: 52px;
+      font-weight: 800;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
     }
 
     .field small {
@@ -803,6 +821,11 @@
           </label>
           <div id="uploadList" class="upload-list"></div>
         </div>
+
+        <div id="textInputSection" class="section-card text-slot-section" hidden>
+          <div class="section-title-row"><span class="mini-step">2</span><h3>文字を入れる</h3></div>
+          <div id="textInputList" class="text-slot-list"></div>
+        </div>
       </div>
 
       <div class="screen-actions">
@@ -856,6 +879,7 @@
             <dl>
               <div><dt>テンプレ</dt><dd id="summaryTemplate"></dd></div>
               <div><dt>写真</dt><dd id="summaryPhotos"></dd></div>
+              <div><dt>文字</dt><dd id="summaryTexts"></dd></div>
             </dl>
             <button id="editInputBtn" class="secondary-button" type="button">写真を選び直す</button>
           </div>
@@ -907,6 +931,25 @@
         src: 'assets/templates/template-1.jpg',
         slots: [
           { type: 'roundRect', x: 174, y: 302, w: 488, h: 626, radius: 0 }
+        ],
+        textSlots: [
+          {
+            id: 'bottomTitle',
+            label: '下のタイトル',
+            defaultText: 'FANMADE TEMPLATE 2026',
+            placeholder: '例：LIVE MEMORY 2026',
+            maxLength: 24,
+            x: 24,
+            y: 1204,
+            w: 430,
+            h: 48,
+            fontSize: 32,
+            fontFamily: 'Arial Black, Impact, sans-serif',
+            color: '#1d1918',
+            align: 'left',
+            baseline: 'middle',
+            cover: { x: 0, y: 1168, w: 440, h: 88, color: '#e6aeb4' }
+          }
         ]
       }
     ];
@@ -925,6 +968,8 @@
       selectedTemplateName: document.getElementById('selectedTemplateName'),
       bulkPhotoInput: document.getElementById('bulkPhotoInput'),
       uploadList: document.getElementById('uploadList'),
+      textInputSection: document.getElementById('textInputSection'),
+      textInputList: document.getElementById('textInputList'),
       backTemplatesBtn: document.getElementById('backTemplatesBtn'),
       changeTemplateBtn: document.getElementById('changeTemplateBtn'),
       toPreviewBtn: document.getElementById('toPreviewBtn'),
@@ -939,6 +984,7 @@
       restartBtn: document.getElementById('restartBtn'),
       summaryTemplate: document.getElementById('summaryTemplate'),
       summaryPhotos: document.getElementById('summaryPhotos'),
+      summaryTexts: document.getElementById('summaryTexts'),
       downloadBtn: document.getElementById('downloadBtn'),
       toast: document.getElementById('toast')
     };
@@ -948,6 +994,7 @@
       stage: 'templates',
       templateId: 'four',
       photos: [],
+      texts: {},
       activePhoto: 0,
       drag: null
     };
@@ -967,6 +1014,19 @@
       while (state.photos.length < count) state.photos.push(emptyPhoto());
       if (state.photos.length > count) state.photos = state.photos.slice(0, count);
       if (state.activePhoto >= count) state.activePhoto = 0;
+    }
+
+    function ensureTextSlots() {
+      const template = currentTemplate();
+      const textSlots = template.textSlots || [];
+      textSlots.forEach(slot => {
+        if (typeof state.texts[slot.id] !== 'string') {
+          state.texts[slot.id] = slot.defaultText || '';
+        }
+      });
+      Object.keys(state.texts).forEach(key => {
+        if (!textSlots.some(slot => slot.id === key)) delete state.texts[key];
+      });
     }
 
     function loadImage(src) {
@@ -1048,6 +1108,7 @@
     function renderInput() {
       const template = currentTemplate();
       ensurePhotoSlots();
+      ensureTextSlots();
       els.selectedTemplateName.textContent = `${template.name}（写真${template.count}枚）`;
       els.uploadList.innerHTML = '';
       state.photos.forEach((photo, index) => {
@@ -1067,6 +1128,40 @@
         input.addEventListener('change', event => loadPhoto(index, event.target.files?.[0]));
         els.uploadList.appendChild(label);
       });
+      renderTextInputs();
+    }
+
+    function renderTextInputs() {
+      const textSlots = currentTemplate().textSlots || [];
+      els.textInputSection.hidden = textSlots.length === 0;
+      els.textInputList.innerHTML = '';
+      textSlots.forEach(slot => {
+        const label = document.createElement('label');
+        label.className = 'field';
+        label.innerHTML = `
+          <span>${slot.label}</span>
+          <input type="text" value="${escapeHtml(state.texts[slot.id] || '')}" maxlength="${slot.maxLength || 40}" placeholder="${escapeHtml(slot.placeholder || '')}" data-text-slot="${slot.id}" />
+          <small>${(state.texts[slot.id] || '').length}/${slot.maxLength || 40}</small>
+        `;
+        const input = label.querySelector('input');
+        const counter = label.querySelector('small');
+        input.addEventListener('input', event => {
+          state.texts[slot.id] = event.target.value;
+          counter.textContent = `${event.target.value.length}/${slot.maxLength || 40}`;
+          render();
+        });
+        els.textInputList.appendChild(label);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
     }
 
     function loadPhoto(index, file) {
@@ -1165,8 +1260,10 @@
         if (photo.url) URL.revokeObjectURL(photo.url);
       });
       state.photos = [];
+      state.texts = {};
       state.activePhoto = 0;
       ensurePhotoSlots();
+      ensureTextSlots();
     }
 
     function restart() {
@@ -1203,6 +1300,43 @@
       const template = currentTemplate();
       els.summaryTemplate.textContent = template.name;
       els.summaryPhotos.textContent = `${state.photos.filter(photo => photo.image).length}/${template.count}枚セット済み`;
+      const textSlots = template.textSlots || [];
+      els.summaryTexts.textContent = textSlots.length
+        ? textSlots.map(slot => `${slot.label}: ${state.texts[slot.id] || '未入力'}`).join('\n')
+        : 'なし';
+    }
+
+    function drawTextSlots(template) {
+      (template.textSlots || []).forEach(slot => {
+        const text = state.texts[slot.id] || slot.defaultText || '';
+        if (!text) return;
+        if (slot.cover) {
+          ctx.save();
+          ctx.fillStyle = slot.cover.color || '#fff';
+          ctx.fillRect(slot.cover.x, slot.cover.y, slot.cover.w, slot.cover.h);
+          ctx.restore();
+        }
+        ctx.save();
+        ctx.font = `${slot.fontWeight || 900} ${slot.fontSize || 32}px ${slot.fontFamily || 'sans-serif'}`;
+        ctx.fillStyle = slot.color || '#222';
+        ctx.textAlign = slot.align || 'left';
+        ctx.textBaseline = slot.baseline || 'middle';
+        const x = slot.align === 'center' ? slot.x + slot.w / 2 : slot.align === 'right' ? slot.x + slot.w : slot.x;
+        const y = slot.y;
+        drawFittedText(text, x, y, slot.w, slot.fontSize || 32);
+        ctx.restore();
+      });
+    }
+
+    function drawFittedText(text, x, y, maxWidth, fontSize) {
+      let currentSize = fontSize;
+      const fontParts = ctx.font.split(' ');
+      while (ctx.measureText(text).width > maxWidth && currentSize > 12) {
+        currentSize -= 1;
+        fontParts[1] = `${currentSize}px`;
+        ctx.font = fontParts.join(' ');
+      }
+      ctx.fillText(text, x, y, maxWidth);
     }
 
     function roundedRectPath(context, x, y, width, height, radius) {
@@ -1306,6 +1440,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
       template.slots.forEach((slot, index) => drawPhotoInSlot(state.photos[index], slot));
+      drawTextSlots(template);
       updateSummary();
     }
 
