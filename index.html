@@ -1193,44 +1193,56 @@
         ]
       },
       {
-        id: 'three',
-        name: '3枚テンプレ',
-        description: '丸写真をつなぐ旅風',
+        id: 'movie',
+        name: '映画風',
+        description: 'フィルム風に写真3枚と色を選べる',
         count: 3,
-        src: 'assets/templates/template-3.jpg',
-        slots: [
-          { type: 'circle', x: 220, y: 259, r: 168 },
-          { type: 'circle', x: 502, y: 640, r: 168 },
-          { type: 'circle', x: 218, y: 1050, r: 168 }
+        src: 'assets/templates/template-movie-mask.jpg',
+        maskSrc: 'assets/templates/template-movie-mask.jpg',
+        renderMode: 'colorGuide',
+        guideColors: [
+          { id: 'filmPink', kind: 'photo', photoIndex: 0, target: [245, 111, 172], tolerance: 90, fallbackColor: '#f56fac' },
+          { id: 'filmYellow', kind: 'photo', photoIndex: 1, target: [255, 205, 62], tolerance: 90, fallbackColor: '#ffcd3e' },
+          { id: 'filmGreen', kind: 'photo', photoIndex: 2, target: [75, 195, 55], tolerance: 90, fallbackColor: '#4bc337' },
+          { id: 'filmFrame', kind: 'color', slotId: 'filmFrameColor', target: [0, 0, 0], tolerance: 95, fallbackColor: '#000000' },
+          { id: 'filmWhite', kind: 'solid', target: [255, 255, 255], tolerance: 80, color: '#ffffff' }
+        ],
+        guideLayers: [
+          { id: 'filmPink', kind: 'photo', photoIndex: 0, fallbackColor: '#f56fac' },
+          { id: 'filmYellow', kind: 'photo', photoIndex: 1, fallbackColor: '#ffcd3e' },
+          { id: 'filmGreen', kind: 'photo', photoIndex: 2, fallbackColor: '#4bc337' },
+          { id: 'filmFrame', kind: 'color', slotId: 'filmFrameColor', fallbackColor: '#000000' },
+          { id: 'filmWhite', kind: 'solid', color: '#ffffff' }
+        ],
+        colorSlots: [
+          {
+            id: 'filmFrameColor',
+            label: 'フィルム部分の色',
+            defaultColor: '#000000',
+            defaultOpacity: 1,
+            note: '黒で示した部分の色と透明度を変えられます'
+          }
         ]
       },
       {
-        id: 'one',
-        name: '1枚テンプレ',
-        description: '1枚写真を大きく見せる',
-        count: 1,
-        src: 'assets/templates/template-1.jpg',
-        slots: [
-          { type: 'roundRect', x: 174, y: 302, w: 488, h: 626, radius: 0 }
+        id: 'polaroid',
+        name: 'ポラロイド',
+        description: 'ポラロイド風に写真3枚を重ねる',
+        count: 3,
+        src: 'assets/templates/template-polaroid-mask.jpg',
+        maskSrc: 'assets/templates/template-polaroid-mask.jpg',
+        renderMode: 'colorGuide',
+        guideColors: [
+          { id: 'polaroidPink', kind: 'photo', photoIndex: 0, target: [245, 111, 172], tolerance: 90, fallbackColor: '#f56fac' },
+          { id: 'polaroidBlue', kind: 'photo', photoIndex: 1, target: [15, 160, 224], tolerance: 95, fallbackColor: '#0fa0e0' },
+          { id: 'polaroidGreen', kind: 'photo', photoIndex: 2, target: [75, 195, 55], tolerance: 95, fallbackColor: '#4bc337' },
+          { id: 'polaroidWhite', kind: 'solid', target: [255, 255, 255], tolerance: 80, color: '#ffffff' }
         ],
-        textSlots: [
-          {
-            id: 'bottomTitle',
-            label: '下のタイトル',
-            defaultText: 'FANMADE TEMPLATE 2026',
-            placeholder: '例：LIVE MEMORY 2026',
-            maxLength: 24,
-            x: 24,
-            y: 1204,
-            w: 430,
-            h: 48,
-            fontSize: 32,
-            fontFamily: 'Arial Black, Impact, sans-serif',
-            color: '#1d1918',
-            align: 'left',
-            baseline: 'middle',
-            cover: { x: 0, y: 1168, w: 440, h: 88, color: '#e6aeb4' }
-          }
+        guideLayers: [
+          { id: 'polaroidPink', kind: 'photo', photoIndex: 0, fallbackColor: '#f56fac' },
+          { id: 'polaroidBlue', kind: 'photo', photoIndex: 1, fallbackColor: '#0fa0e0' },
+          { id: 'polaroidGreen', kind: 'photo', photoIndex: 2, fallbackColor: '#4bc337' },
+          { id: 'polaroidWhite', kind: 'solid', color: '#ffffff' }
         ]
       }
     ];
@@ -2071,6 +2083,91 @@
       ctx.drawImage(work, 0, 0);
     }
 
+    async function getColorGuideMasks(template) {
+      if (template.maskCache) return template.maskCache;
+      const image = await loadImage(template.maskSrc || template.src);
+      const source = createWorkCanvas();
+      const sourceCtx = source.getContext('2d', { willReadFrequently: true });
+      sourceCtx.drawImage(image, 0, 0, source.width, source.height);
+      const pixels = sourceCtx.getImageData(0, 0, source.width, source.height);
+      const masks = {};
+
+      template.guideColors.forEach(def => {
+        masks[def.id] = {
+          imageData: sourceCtx.createImageData(source.width, source.height),
+          canvas: createWorkCanvas(),
+          bounds: { minX: source.width, minY: source.height, maxX: 0, maxY: 0 }
+        };
+      });
+
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const alpha = pixels.data[i + 3];
+        if (!alpha) continue;
+        const pixelIndex = i / 4;
+        const x = pixelIndex % source.width;
+        const y = Math.floor(pixelIndex / source.width);
+        const r = pixels.data[i];
+        const g = pixels.data[i + 1];
+        const b = pixels.data[i + 2];
+        let bestDef = null;
+        let bestDistance = Infinity;
+
+        template.guideColors.forEach(def => {
+          const distance = colorDistance(r, g, b, def.target);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestDef = def;
+          }
+        });
+
+        if (!bestDef || bestDistance > bestDef.tolerance) continue;
+        const mask = masks[bestDef.id];
+        mask.imageData.data[i] = 255;
+        mask.imageData.data[i + 1] = 255;
+        mask.imageData.data[i + 2] = 255;
+        mask.imageData.data[i + 3] = alpha;
+        mask.bounds.minX = Math.min(mask.bounds.minX, x);
+        mask.bounds.minY = Math.min(mask.bounds.minY, y);
+        mask.bounds.maxX = Math.max(mask.bounds.maxX, x);
+        mask.bounds.maxY = Math.max(mask.bounds.maxY, y);
+      }
+
+      Object.values(masks).forEach(mask => {
+        mask.canvas.getContext('2d').putImageData(mask.imageData, 0, 0);
+        mask.isEmpty = mask.bounds.minX > mask.bounds.maxX || mask.bounds.minY > mask.bounds.maxY;
+      });
+
+      template.maskCache = masks;
+      return template.maskCache;
+    }
+
+    async function drawColorGuideTemplate(template) {
+      const masks = await getColorGuideMasks(template);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      template.guideLayers.forEach(layer => {
+        const mask = masks[layer.id];
+        if (!mask || mask.isEmpty) return;
+        if (layer.kind === 'photo') {
+          const photo = state.photos[layer.photoIndex];
+          if (photo?.image) {
+            drawPhotoThroughMask(photo, mask.canvas, mask.bounds);
+          } else {
+            drawSolidThroughMask(mask.canvas, layer.fallbackColor || '#f56fac');
+          }
+        }
+        if (layer.kind === 'color') {
+          const color = colorWithOpacity(
+            state.colors[layer.slotId] || layer.fallbackColor || '#000000',
+            state.opacities[layer.slotId] ?? 1
+          );
+          drawSolidThroughMask(mask.canvas, color);
+        }
+        if (layer.kind === 'solid') {
+          drawSolidThroughMask(mask.canvas, layer.color || '#ffffff');
+        }
+      });
+    }
+
     function drawPhotoThroughMask(photo, mask, bounds) {
       if (!photo?.image) return;
       const work = createWorkCanvas();
@@ -2111,6 +2208,8 @@
       const template = currentTemplate();
       if (template.renderMode === 'heartMessage') {
         await drawHeartMessageTemplate(template);
+      } else if (template.renderMode === 'colorGuide') {
+        await drawColorGuideTemplate(template);
       } else {
         const bg = await loadImage(template.src);
         ctx.clearRect(0, 0, canvas.width, canvas.height);

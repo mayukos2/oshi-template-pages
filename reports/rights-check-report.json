@@ -93,6 +93,33 @@
     "recommendation": "publish ok"
   },
   {
+    "file": "assets/templates/template-movie-mask.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source",
+      "color customizable"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
+    "file": "assets/templates/template-polaroid-mask.jpg",
+    "hasMetadata": true,
+    "risk": "low",
+    "canPublish": true,
+    "requiresHumanReview": false,
+    "reasons": [
+      "metadata present",
+      "no high-risk flags",
+      "original / owned source"
+    ],
+    "recommendation": "publish ok"
+  },
+  {
     "file": "index.html public text",
     "hasMetadata": true,
     "risk": "low",
