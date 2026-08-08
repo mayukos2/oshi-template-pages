@@ -418,13 +418,55 @@
       white-space: nowrap;
     }
 
-    .text-slot-section[hidden] {
+    .text-slot-section[hidden],
+    .color-slot-section[hidden] {
       display: none !important;
     }
 
-    .text-slot-list {
+    .text-slot-list,
+    .color-slot-list {
       display: grid;
       gap: 12px;
+    }
+
+    .color-field {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .color-field input[type="color"] {
+      width: 52px;
+      height: 44px;
+      padding: 3px;
+      border-radius: 14px;
+      border: 1px solid rgba(127,124,175,.24);
+      background: #fff;
+    }
+
+    .color-field strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .color-field small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .eyedropper-button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid rgba(127,124,175,.28);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--accent-dark);
+      font-weight: 900;
     }
 
     .field {
@@ -826,6 +868,11 @@
           <div class="section-title-row"><span class="mini-step">2</span><h3>文字を入れる</h3></div>
           <div id="textInputList" class="text-slot-list"></div>
         </div>
+
+        <div id="colorInputSection" class="section-card color-slot-section" hidden>
+          <div class="section-title-row"><span class="mini-step">3</span><h3>色を選ぶ</h3></div>
+          <div id="colorInputList" class="color-slot-list"></div>
+        </div>
       </div>
 
       <div class="screen-actions">
@@ -899,16 +946,20 @@
   <script>
     const templates = [
       {
-        id: 'four',
-        name: '4枚テンプレ',
-        description: '縦に並ぶ4枚写真',
-        count: 4,
-        src: 'assets/templates/template-4.jpg',
-        slots: [
-          { type: 'poly', bleed: 8, points: [[368, 126], [650, 218], [590, 405], [307, 314]] },
-          { type: 'poly', bleed: 8, points: [[292, 368], [575, 459], [515, 646], [232, 555]] },
-          { type: 'poly', bleed: 8, points: [[218, 601], [501, 694], [441, 879], [157, 788]] },
-          { type: 'poly', bleed: 8, points: [[138, 845], [421, 937], [360, 1123], [77, 1030]] }
+        id: 'heart-message',
+        name: 'ハートメッセージ',
+        description: '写真2枚と色を選べるハート',
+        count: 2,
+        src: 'assets/templates/template-heart-message.svg',
+        renderMode: 'heartMessage',
+        slots: [{ type: 'full' }, { type: 'heart' }],
+        colorSlots: [
+          {
+            id: 'heartColor',
+            label: 'ハートの色',
+            defaultColor: '#ffffff',
+            note: '青で示した部分の色を変えられます'
+          }
         ]
       },
       {
@@ -970,6 +1021,8 @@
       uploadList: document.getElementById('uploadList'),
       textInputSection: document.getElementById('textInputSection'),
       textInputList: document.getElementById('textInputList'),
+      colorInputSection: document.getElementById('colorInputSection'),
+      colorInputList: document.getElementById('colorInputList'),
       backTemplatesBtn: document.getElementById('backTemplatesBtn'),
       changeTemplateBtn: document.getElementById('changeTemplateBtn'),
       toPreviewBtn: document.getElementById('toPreviewBtn'),
@@ -992,9 +1045,10 @@
     const imageCache = new Map();
     const state = {
       stage: 'templates',
-      templateId: 'four',
+      templateId: 'heart-message',
       photos: [],
       texts: {},
+      colors: {},
       activePhoto: 0,
       drag: null
     };
@@ -1026,6 +1080,19 @@
       });
       Object.keys(state.texts).forEach(key => {
         if (!textSlots.some(slot => slot.id === key)) delete state.texts[key];
+      });
+    }
+
+    function ensureColorSlots() {
+      const template = currentTemplate();
+      const colorSlots = template.colorSlots || [];
+      colorSlots.forEach(slot => {
+        if (typeof state.colors[slot.id] !== 'string') {
+          state.colors[slot.id] = slot.defaultColor || '#ffffff';
+        }
+      });
+      Object.keys(state.colors).forEach(key => {
+        if (!colorSlots.some(slot => slot.id === key)) delete state.colors[key];
       });
     }
 
@@ -1068,6 +1135,7 @@
         card.addEventListener('click', () => {
           state.templateId = template.id;
           ensurePhotoSlots();
+          ensureColorSlots();
           renderTemplates();
           renderInput();
           renderPreviewControls();
@@ -1109,6 +1177,7 @@
       const template = currentTemplate();
       ensurePhotoSlots();
       ensureTextSlots();
+      ensureColorSlots();
       els.selectedTemplateName.textContent = `${template.name}（写真${template.count}枚）`;
       els.uploadList.innerHTML = '';
       state.photos.forEach((photo, index) => {
@@ -1129,6 +1198,7 @@
         els.uploadList.appendChild(label);
       });
       renderTextInputs();
+      renderColorInputs();
     }
 
     function renderTextInputs() {
@@ -1162,6 +1232,47 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function renderColorInputs() {
+      const colorSlots = currentTemplate().colorSlots || [];
+      els.colorInputSection.hidden = colorSlots.length === 0;
+      els.colorInputList.innerHTML = '';
+      colorSlots.forEach(slot => {
+        const row = document.createElement('div');
+        row.className = 'color-field';
+        const currentColor = state.colors[slot.id] || slot.defaultColor || '#ffffff';
+        const canUseEyeDropper = 'EyeDropper' in window;
+        row.innerHTML = `
+          <input type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
+          <span>
+            <strong>${escapeHtml(slot.label)}</strong>
+            <small>${escapeHtml(slot.note || '好きな色を選べます')}</small>
+          </span>
+          <button class="eyedropper-button" type="button" data-eyedropper="${slot.id}" ${canUseEyeDropper ? '' : 'hidden'}>スポイト</button>
+        `;
+        const input = row.querySelector('input');
+        input.addEventListener('input', event => {
+          state.colors[slot.id] = event.target.value;
+          render();
+        });
+        const eyedropper = row.querySelector('[data-eyedropper]');
+        eyedropper?.addEventListener('click', async () => {
+          if (!('EyeDropper' in window)) {
+            showToast('このブラウザではスポイトが使えません');
+            return;
+          }
+          try {
+            const result = await new EyeDropper().open();
+            state.colors[slot.id] = result.sRGBHex;
+            input.value = result.sRGBHex;
+            render();
+          } catch (error) {
+            showToast('スポイトをキャンセルしました');
+          }
+        });
+        els.colorInputList.appendChild(row);
+      });
     }
 
     function loadPhoto(index, file) {
@@ -1261,13 +1372,15 @@
       });
       state.photos = [];
       state.texts = {};
+      state.colors = {};
       state.activePhoto = 0;
       ensurePhotoSlots();
       ensureTextSlots();
+      ensureColorSlots();
     }
 
     function restart() {
-      state.templateId = 'four';
+      state.templateId = 'heart-message';
       clearPhotos();
       renderTemplates();
       renderInput();
@@ -1399,6 +1512,13 @@
         ctx.clip();
         drawCover(photo.image, slot.w, slot.h, photo);
       }
+      if (slot.type === 'full') {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.beginPath();
+        ctx.rect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ctx.clip();
+        drawCover(photo.image, canvas.width, canvas.height, photo);
+      }
       if (slot.type === 'circle') {
         ctx.translate(slot.x, slot.y);
         ctx.beginPath();
@@ -1434,12 +1554,122 @@
       ctx.restore();
     }
 
+    function heartPath(context, cx, cy, width, height, rotate = 0) {
+      const w = width / 2;
+      const h = height / 2;
+      context.save();
+      context.translate(cx, cy);
+      context.rotate(rotate);
+      context.beginPath();
+      context.moveTo(0, h * .78);
+      context.bezierCurveTo(-w * .95, h * .2, -w * 1.02, -h * .48, -w * .44, -h * .62);
+      context.bezierCurveTo(-w * .16, -h * .72, 0, -h * .5, 0, -h * .28);
+      context.bezierCurveTo(w * .04, -h * .55, w * .3, -h * .77, w * .62, -h * .66);
+      context.bezierCurveTo(w * 1.18, -h * .44, w * .94, h * .34, 0, h * .78);
+      context.closePath();
+      context.restore();
+    }
+
+    function fillHeart(cx, cy, width, height, color, rotate = 0) {
+      ctx.save();
+      heartPath(ctx, cx, cy, width, height, rotate);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function clipHeart(cx, cy, width, height, rotate = 0) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotate);
+      const w = width / 2;
+      const h = height / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, h * .78);
+      ctx.bezierCurveTo(-w * .95, h * .2, -w * 1.02, -h * .48, -w * .44, -h * .62);
+      ctx.bezierCurveTo(-w * .16, -h * .72, 0, -h * .5, 0, -h * .28);
+      ctx.bezierCurveTo(w * .04, -h * .55, w * .3, -h * .77, w * .62, -h * .66);
+      ctx.bezierCurveTo(w * 1.18, -h * .44, w * .94, h * .34, 0, h * .78);
+      ctx.closePath();
+      ctx.clip();
+    }
+
+    function strokeMiniHeart(cx, cy, size, rotate = 0) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotate);
+      ctx.scale(size / 100, size / 100);
+      ctx.beginPath();
+      ctx.moveTo(0, 32);
+      ctx.bezierCurveTo(-42, 8, -48, -22, -20, -29);
+      ctx.bezierCurveTo(-7, -32, 0, -20, 0, -10);
+      ctx.bezierCurveTo(8, -25, 26, -34, 42, -22);
+      ctx.bezierCurveTo(67, -3, 35, 25, 0, 48);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 8;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCharcoalHatch() {
+      ctx.save();
+      ctx.fillStyle = 'rgba(37, 35, 36, .50)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(37, 35, 36, .28)';
+      ctx.lineWidth = 2;
+      for (let x = -canvas.height; x < canvas.width; x += 18) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + canvas.height, canvas.height);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHeartMessageTemplate() {
+      const color = state.colors.heartColor || '#ffffff';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (state.photos[0]?.image) {
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        drawCover(state.photos[0].image, canvas.width, canvas.height, state.photos[0]);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#f571ad';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      drawCharcoalHatch();
+      fillHeart(220, 340, 650, 610, color, -.22);
+      fillHeart(595, 1008, 670, 650, color, -.08);
+
+      if (state.photos[1]?.image) {
+        clipHeart(210, 350, 540, 500, -.22);
+        drawCover(state.photos[1].image, 540, 500, state.photos[1]);
+        ctx.restore();
+      }
+
+      [
+        [645, 235, 45, .2],
+        [618, 455, 38, -.2],
+        [655, 625, 42, .05],
+        [462, 700, 32, .06],
+        [178, 825, 31, .15],
+        [135, 1030, 27, .05],
+        [218, 1192, 53, -.18]
+      ].forEach(([x, y, size, rotate]) => strokeMiniHeart(x, y, size, rotate));
+    }
+
     async function render() {
       const template = currentTemplate();
-      const bg = await loadImage(template.src);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-      template.slots.forEach((slot, index) => drawPhotoInSlot(state.photos[index], slot));
+      if (template.renderMode === 'heartMessage') {
+        drawHeartMessageTemplate();
+      } else {
+        const bg = await loadImage(template.src);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+        template.slots.forEach((slot, index) => drawPhotoInSlot(state.photos[index], slot));
+      }
       drawTextSlots(template);
       updateSummary();
     }
@@ -1521,6 +1751,7 @@
 
     renderTemplates();
     ensurePhotoSlots();
+    ensureColorSlots();
     setStage('templates', false);
     loadImage(currentTemplate().src).then(render);
   </script>

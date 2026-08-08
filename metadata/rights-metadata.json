@@ -19,6 +19,24 @@
       "notes": "架空の推し活アプリ紹介ビジュアル。実在人物名・公式名・既存キャラクター名は使っていない。特定の公式グッズ再現ではない。"
     },
     {
+      "id": "paid-heart-message",
+      "file": "assets/templates/template-heart-message.svg",
+      "title": "ハートメッセージテンプレ",
+      "type": "template",
+      "sourceType": "original",
+      "createdBy": "mayuko",
+      "license": "original",
+      "usesRealPerson": false,
+      "usesOfficialLogo": false,
+      "usesOfficialScreenshot": false,
+      "usesExistingCharacter": false,
+      "usesGroupNameOrTourName": false,
+      "inspiredByOfficialMerch": false,
+      "allowsColorChange": true,
+      "sampleUsesFictionalContent": true,
+      "notes": "オリジナルのハート型写真テンプレ。背景写真、ハート内写真、色変更可能な装飾で構成。公式素材・実在名・既存キャラクターは使っていない。特定の公式グッズ再現ではない。"
+    },
+    {
       "id": "paid-four-photo-strip",
       "file": "assets/templates/template-4.jpg",
       "title": "4枚フォトストリップテンプレ",
