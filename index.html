@@ -445,12 +445,6 @@
       background: #fff;
     }
 
-    .hidden-color-input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
     .color-swatch {
       width: 44px;
       height: 44px;
@@ -485,6 +479,7 @@
     }
 
     .color-action-button {
+      position: relative;
       min-height: 48px;
       padding: 10px 12px;
       border: 1px solid rgba(127,124,175,.28);
@@ -492,6 +487,21 @@
       background: #fff;
       color: var(--accent-dark);
       font-weight: 900;
+      cursor: pointer;
+    }
+
+    .palette-action {
+      overflow: hidden;
+    }
+
+    .palette-action input[type="color"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: .001;
+      border: 0;
+      padding: 0;
       cursor: pointer;
     }
 
@@ -564,6 +574,17 @@
       display: grid;
       gap: 14px;
       padding: 14px;
+    }
+
+    .sampler-help {
+      margin: 0;
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: #f7f2fb;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.7;
     }
 
     .sample-photo-tabs {
@@ -1127,6 +1148,7 @@
       </div>
       <div class="sampler-body">
         <div id="samplerPhotoTabs" class="sample-photo-tabs"></div>
+        <p class="sampler-help">写真の上で指を押したまま動かすと、写真の中から色を選べます。左下などが見えない時は、拡大・左右・上下で写真を動かしてね。</p>
         <canvas id="samplerCanvas" class="large-sampler" width="640" height="640" aria-label="写真から色を選ぶ"></canvas>
         <div class="sampler-preview-row">
           <span id="samplerPickedColor" class="sampler-picked-color"></span>
@@ -1488,12 +1510,14 @@
             <small>${escapeHtml(slot.note || '好きな色を選べます')}</small>
           </span>
           <div class="color-actions">
-            <button class="color-action-button" type="button" data-palette="${slot.id}">カラーパレットから選ぶ</button>
+            <label class="color-action-button palette-action">
+              カラーパレットから選ぶ
+              <input type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
+            </label>
             <button class="color-action-button" type="button" data-photo-sampler="${slot.id}">写真から色を取る</button>
           </div>
-          <input class="hidden-color-input" type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
         `;
-        const input = row.querySelector('input');
+        const input = row.querySelector('input[type="color"]');
         const swatch = row.querySelector('.color-swatch');
         input.addEventListener('input', event => {
           state.colors[slot.id] = event.target.value;
@@ -1501,7 +1525,6 @@
           renderColorInputs(els.previewColorInputSection, els.previewColorInputList);
           render();
         });
-        row.querySelector('[data-palette]').addEventListener('click', () => input.click());
         row.querySelector('[data-photo-sampler]').addEventListener('click', () => openSamplerModal(slot.id));
         if (typeof slot.defaultOpacity === 'number') {
           const opacityField = document.createElement('label');
