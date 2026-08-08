@@ -431,7 +431,7 @@
 
     .color-field {
       display: grid;
-      grid-template-columns: 52px 1fr;
+      grid-template-columns: 44px 1fr;
       gap: 12px;
       align-items: center;
     }
@@ -443,6 +443,20 @@
       border-radius: 14px;
       border: 1px solid rgba(127,124,175,.24);
       background: #fff;
+    }
+
+    .hidden-color-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .color-swatch {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(127,124,175,.28), 0 8px 18px rgba(60,52,80,.12);
     }
 
     .color-field strong {
@@ -463,55 +477,93 @@
       grid-column: 1 / -1;
     }
 
-    .eyedropper-button {
-      min-height: 42px;
-      padding: 0 14px;
+    .color-actions {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .color-action-button {
+      min-height: 48px;
+      padding: 10px 12px;
       border: 1px solid rgba(127,124,175,.28);
-      border-radius: 999px;
+      border-radius: 8px;
       background: #fff;
       color: var(--accent-dark);
       font-weight: 900;
+      cursor: pointer;
     }
 
-    .photo-color-samplers {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-      grid-column: 1 / -1;
+    .color-action-button:active {
+      transform: translateY(1px);
+      background: #f4eff9;
     }
 
-    .photo-color-sampler {
+    .sampler-modal[hidden] {
+      display: none !important;
+    }
+
+    .sampler-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
       display: grid;
-      gap: 6px;
-      justify-items: center;
-      border: 1px solid var(--line);
+      place-items: center;
+      padding: 18px;
+      background: rgba(28, 24, 35, .56);
+      backdrop-filter: blur(10px);
+    }
+
+    .sampler-dialog {
+      width: min(100%, 520px);
+      max-height: min(92vh, 820px);
+      overflow: auto;
       border-radius: 8px;
-      padding: 8px;
       background: #fff;
-      color: var(--muted);
-      font-size: 11px;
+      box-shadow: 0 24px 80px rgba(18, 14, 26, .28);
+    }
+
+    .sampler-header,
+    .sampler-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sampler-footer {
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+    }
+
+    .sampler-header strong {
+      color: var(--text);
+      font-size: 16px;
       font-weight: 900;
     }
 
-    .photo-color-sampler canvas {
-      width: 72px;
-      height: 72px;
-      border-radius: 8px;
-      border: 1px solid #eee8f4;
-      cursor: crosshair;
-      touch-action: none;
+    .sampler-close {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--accent-dark);
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
     }
 
-    .photo-sampler-tool {
+    .sampler-body {
       display: grid;
-      gap: 10px;
-      grid-column: 1 / -1;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 8px;
-      background: #faf7fd;
-      border: 1px solid #ede7f5;
+      gap: 14px;
+      padding: 14px;
     }
 
     .sample-photo-tabs {
@@ -538,13 +590,30 @@
     }
 
     .large-sampler {
-      width: min(100%, 320px);
+      width: min(100%, 430px);
       aspect-ratio: 1 / 1;
       border-radius: 8px;
       border: 1px solid #e6dfef;
       background: #fff;
       touch-action: none;
       cursor: crosshair;
+    }
+
+    .sampler-preview-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .sampler-picked-color {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 1px rgba(127,124,175,.3);
     }
 
     .field {
@@ -1050,6 +1119,30 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <div id="samplerModal" class="sampler-modal" hidden>
+    <div class="sampler-dialog" role="dialog" aria-modal="true" aria-labelledby="samplerTitle">
+      <div class="sampler-header">
+        <strong id="samplerTitle">写真から色を取る</strong>
+        <button id="samplerCloseBtn" class="sampler-close" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="sampler-body">
+        <div id="samplerPhotoTabs" class="sample-photo-tabs"></div>
+        <canvas id="samplerCanvas" class="large-sampler" width="640" height="640" aria-label="写真から色を選ぶ"></canvas>
+        <div class="sampler-preview-row">
+          <span id="samplerPickedColor" class="sampler-picked-color"></span>
+          <span id="samplerPickedText">写真の上で指を動かすと色が変わります</span>
+        </div>
+        <label class="range-field"><span>拡大</span><input id="samplerZoomInput" type="range" min="1" max="6" step="0.05" value="1.8" /></label>
+        <label class="range-field"><span>左右</span><input id="samplerXInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
+        <label class="range-field"><span>上下</span><input id="samplerYInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
+      </div>
+      <div class="sampler-footer">
+        <button id="samplerCancelBtn" class="secondary-button" type="button">キャンセル</button>
+        <button id="samplerApplyBtn" class="primary-button" type="button">この色にする</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const templates = [
       {
@@ -1156,7 +1249,19 @@
       summaryPhotos: document.getElementById('summaryPhotos'),
       summaryTexts: document.getElementById('summaryTexts'),
       downloadBtn: document.getElementById('downloadBtn'),
-      toast: document.getElementById('toast')
+      toast: document.getElementById('toast'),
+      samplerModal: document.getElementById('samplerModal'),
+      samplerTitle: document.getElementById('samplerTitle'),
+      samplerCloseBtn: document.getElementById('samplerCloseBtn'),
+      samplerPhotoTabs: document.getElementById('samplerPhotoTabs'),
+      samplerCanvas: document.getElementById('samplerCanvas'),
+      samplerPickedColor: document.getElementById('samplerPickedColor'),
+      samplerPickedText: document.getElementById('samplerPickedText'),
+      samplerZoomInput: document.getElementById('samplerZoomInput'),
+      samplerXInput: document.getElementById('samplerXInput'),
+      samplerYInput: document.getElementById('samplerYInput'),
+      samplerCancelBtn: document.getElementById('samplerCancelBtn'),
+      samplerApplyBtn: document.getElementById('samplerApplyBtn')
     };
 
     const imageCache = new Map();
@@ -1168,6 +1273,7 @@
       colors: {},
       opacities: {},
       colorSamplers: {},
+      samplerModal: null,
       activePhoto: 0,
       drag: null
     };
@@ -1376,17 +1482,27 @@
         row.className = 'color-field';
         const currentColor = state.colors[slot.id] || slot.defaultColor || '#ffffff';
         row.innerHTML = `
-          <input type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
+          <span class="color-swatch" style="background:${escapeHtml(currentColor)}"></span>
           <span>
             <strong>${escapeHtml(slot.label)}</strong>
             <small>${escapeHtml(slot.note || '好きな色を選べます')}</small>
           </span>
+          <div class="color-actions">
+            <button class="color-action-button" type="button" data-palette="${slot.id}">カラーパレットから選ぶ</button>
+            <button class="color-action-button" type="button" data-photo-sampler="${slot.id}">写真から色を取る</button>
+          </div>
+          <input class="hidden-color-input" type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
         `;
         const input = row.querySelector('input');
+        const swatch = row.querySelector('.color-swatch');
         input.addEventListener('input', event => {
           state.colors[slot.id] = event.target.value;
+          swatch.style.background = event.target.value;
+          renderColorInputs(els.previewColorInputSection, els.previewColorInputList);
           render();
         });
+        row.querySelector('[data-palette]').addEventListener('click', () => input.click());
+        row.querySelector('[data-photo-sampler]').addEventListener('click', () => openSamplerModal(slot.id));
         if (typeof slot.defaultOpacity === 'number') {
           const opacityField = document.createElement('label');
           opacityField.className = 'range-field';
@@ -1398,77 +1514,11 @@
           });
           row.appendChild(opacityField);
         }
-        const samplerTool = renderPhotoSamplerTool(slot, input);
-        if (samplerTool) row.appendChild(samplerTool);
         list.appendChild(row);
       });
     }
 
-    function renderPhotoSamplerTool(slot, colorInput) {
-      const availablePhotos = state.photos
-        .map((photo, index) => ({ photo, index }))
-        .filter(item => item.photo.image);
-      if (!availablePhotos.length) return null;
-
-      const samplerState = state.colorSamplers[slot.id] || { photoIndex: availablePhotos[0].index, zoom: 1.8 };
-      if (!state.photos[samplerState.photoIndex]?.image) samplerState.photoIndex = availablePhotos[0].index;
-      state.colorSamplers[slot.id] = samplerState;
-
-      const tool = document.createElement('div');
-      tool.className = 'photo-sampler-tool';
-      const title = document.createElement('strong');
-      title.textContent = '写真から色を取る';
-      const tabs = document.createElement('div');
-      tabs.className = 'sample-photo-tabs';
-      availablePhotos.forEach(({ index }) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `sample-photo-tab${index === samplerState.photoIndex ? ' is-active' : ''}`;
-        button.textContent = `写真${index + 1}`;
-        button.addEventListener('click', () => {
-          samplerState.photoIndex = index;
-          renderColorInputs(els.colorInputSection, els.colorInputList);
-          renderColorInputs(els.previewColorInputSection, els.previewColorInputList);
-        });
-        tabs.appendChild(button);
-      });
-
-      const sampleCanvas = document.createElement('canvas');
-      sampleCanvas.className = 'large-sampler';
-      sampleCanvas.width = 480;
-      sampleCanvas.height = 480;
-      sampleCanvas.setAttribute('aria-label', `${slot.label}を写真から選ぶ`);
-
-      const zoomField = document.createElement('label');
-      zoomField.className = 'range-field';
-      zoomField.innerHTML = `<span>写真拡大</span><input type="range" min="1" max="5" step="0.05" value="${samplerState.zoom || 1.8}" />`;
-      const zoomInput = zoomField.querySelector('input');
-      zoomInput.addEventListener('input', event => {
-        samplerState.zoom = Number(event.target.value);
-        drawSamplerCanvas(sampleCanvas, state.photos[samplerState.photoIndex].image, samplerState.zoom);
-      });
-
-      const pickColor = event => {
-        event.preventDefault();
-        const color = sampleColorFromCanvas(sampleCanvas, event);
-        if (!color) return;
-        state.colors[slot.id] = color;
-        colorInput.value = color;
-        render();
-        showToast(`${slot.label}を写真${samplerState.photoIndex + 1}から選びました`);
-      };
-      sampleCanvas.addEventListener('pointerdown', pickColor);
-
-      tool.appendChild(title);
-      tool.appendChild(tabs);
-      tool.appendChild(sampleCanvas);
-      tool.appendChild(zoomField);
-      const activePhotoImage = state.photos[samplerState.photoIndex]?.image;
-      if (activePhotoImage) drawSamplerCanvas(sampleCanvas, activePhotoImage, samplerState.zoom || 1.8);
-      return tool;
-    }
-
-    function drawSamplerCanvas(sampleCanvas, image, zoom = 1) {
+    function drawSamplerCanvas(sampleCanvas, image, zoom = 1, offsetX = 0, offsetY = 0) {
       const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
       const width = sampleCanvas.width;
       const height = sampleCanvas.height;
@@ -1478,8 +1528,8 @@
       const scale = Math.max(width / image.width, height / image.height) * zoom;
       const drawWidth = image.width * scale;
       const drawHeight = image.height * scale;
-      const dx = (width - drawWidth) / 2;
-      const dy = (height - drawHeight) / 2;
+      const dx = (width - drawWidth) / 2 + offsetX * width * .45;
+      const dy = (height - drawHeight) / 2 + offsetY * height * .45;
       sampleCtx.drawImage(image, dx, dy, drawWidth, drawHeight);
     }
 
@@ -1489,6 +1539,137 @@
       const y = clamp(Math.floor((event.clientY - rect.top) * (sampleCanvas.height / rect.height)), 0, sampleCanvas.height - 1);
       const data = sampleCanvas.getContext('2d', { willReadFrequently: true }).getImageData(x, y, 1, 1).data;
       return `#${[data[0], data[1], data[2]].map(value => value.toString(16).padStart(2, '0')).join('')}`;
+    }
+
+    function currentSamplerSlot() {
+      const slotId = state.samplerModal?.slotId;
+      return (currentTemplate().colorSlots || []).find(slot => slot.id === slotId);
+    }
+
+    function openSamplerModal(slotId) {
+      const photosWithImages = state.photos
+        .map((photo, index) => ({ photo, index }))
+        .filter(item => item.photo.image);
+      if (!photosWithImages.length) {
+        showToast('先に写真を選んでください');
+        return;
+      }
+      const samplerState = state.colorSamplers[slotId] || { photoIndex: photosWithImages[0].index, zoom: 1.8, x: 0, y: 0 };
+      if (!state.photos[samplerState.photoIndex]?.image) samplerState.photoIndex = photosWithImages[0].index;
+      state.colorSamplers[slotId] = samplerState;
+      state.samplerModal = {
+        slotId,
+        originalColor: state.colors[slotId],
+        pickedColor: state.colors[slotId],
+        isSampling: false
+      };
+      els.samplerModal.hidden = false;
+      renderSamplerModal();
+    }
+
+    function closeSamplerModal(shouldApply) {
+      if (!state.samplerModal) return;
+      const slotId = state.samplerModal.slotId;
+      if (!shouldApply) {
+        state.colors[slotId] = state.samplerModal.originalColor;
+        render();
+      }
+      state.samplerModal = null;
+      els.samplerModal.hidden = true;
+      renderColorInputs(els.previewColorInputSection, els.previewColorInputList);
+    }
+
+    function renderSamplerModal() {
+      if (!state.samplerModal) return;
+      const slot = currentSamplerSlot();
+      const slotId = state.samplerModal.slotId;
+      const samplerState = state.colorSamplers[slotId];
+      els.samplerTitle.textContent = `${slot?.label || '色'}を写真から取る`;
+      els.samplerPhotoTabs.innerHTML = '';
+      state.photos.forEach((photo, index) => {
+        if (!photo.image) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `sample-photo-tab${index === samplerState.photoIndex ? ' is-active' : ''}`;
+        button.textContent = `写真${index + 1}`;
+        button.addEventListener('click', () => {
+          samplerState.photoIndex = index;
+          samplerState.x = 0;
+          samplerState.y = 0;
+          syncSamplerControls();
+          renderSamplerModal();
+        });
+        els.samplerPhotoTabs.appendChild(button);
+      });
+      syncSamplerControls();
+      drawActiveSamplerCanvas();
+      updateSamplerPicked(state.samplerModal.pickedColor || state.colors[slotId]);
+    }
+
+    function syncSamplerControls() {
+      const samplerState = state.colorSamplers[state.samplerModal.slotId];
+      els.samplerZoomInput.value = samplerState.zoom ?? 1.8;
+      els.samplerXInput.value = samplerState.x ?? 0;
+      els.samplerYInput.value = samplerState.y ?? 0;
+    }
+
+    function updateSamplerFromControls() {
+      if (!state.samplerModal) return;
+      const samplerState = state.colorSamplers[state.samplerModal.slotId];
+      samplerState.zoom = Number(els.samplerZoomInput.value);
+      samplerState.x = Number(els.samplerXInput.value);
+      samplerState.y = Number(els.samplerYInput.value);
+      drawActiveSamplerCanvas();
+    }
+
+    function drawActiveSamplerCanvas() {
+      if (!state.samplerModal) return;
+      const samplerState = state.colorSamplers[state.samplerModal.slotId];
+      const photo = state.photos[samplerState.photoIndex];
+      if (!photo?.image) return;
+      drawSamplerCanvas(
+        els.samplerCanvas,
+        photo.image,
+        samplerState.zoom ?? 1.8,
+        samplerState.x ?? 0,
+        samplerState.y ?? 0
+      );
+    }
+
+    function updateSamplerPicked(color) {
+      if (!state.samplerModal || !color) return;
+      state.samplerModal.pickedColor = color;
+      state.colors[state.samplerModal.slotId] = color;
+      els.samplerPickedColor.style.background = color;
+      els.samplerPickedText.textContent = color;
+      render();
+    }
+
+    function pickSamplerColor(event) {
+      if (!state.samplerModal) return;
+      event.preventDefault();
+      const color = sampleColorFromCanvas(els.samplerCanvas, event);
+      updateSamplerPicked(color);
+    }
+
+    function startSamplerPick(event) {
+      if (!state.samplerModal) return;
+      state.samplerModal.isSampling = true;
+      els.samplerCanvas.setPointerCapture(event.pointerId);
+      pickSamplerColor(event);
+    }
+
+    function moveSamplerPick(event) {
+      if (!state.samplerModal?.isSampling) return;
+      pickSamplerColor(event);
+    }
+
+    function stopSamplerPick(event) {
+      if (!state.samplerModal) return;
+      state.samplerModal.isSampling = false;
+      if (els.samplerCanvas.hasPointerCapture(event.pointerId)) {
+        els.samplerCanvas.releasePointerCapture(event.pointerId);
+      }
     }
 
     function loadPhoto(index, file) {
@@ -1992,6 +2173,16 @@
     canvas.addEventListener('pointermove', moveDrag);
     canvas.addEventListener('pointerup', stopDrag);
     canvas.addEventListener('pointercancel', stopDrag);
+    els.samplerCloseBtn.addEventListener('click', () => closeSamplerModal(false));
+    els.samplerCancelBtn.addEventListener('click', () => closeSamplerModal(false));
+    els.samplerApplyBtn.addEventListener('click', () => closeSamplerModal(true));
+    [els.samplerZoomInput, els.samplerXInput, els.samplerYInput].forEach(input => {
+      input.addEventListener('input', updateSamplerFromControls);
+    });
+    els.samplerCanvas.addEventListener('pointerdown', startSamplerPick);
+    els.samplerCanvas.addEventListener('pointermove', moveSamplerPick);
+    els.samplerCanvas.addEventListener('pointerup', stopSamplerPick);
+    els.samplerCanvas.addEventListener('pointercancel', stopSamplerPick);
     els.progress.forEach(button => button.addEventListener('click', () => setStage(button.dataset.go)));
 
     renderTemplates();
