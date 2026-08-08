@@ -469,6 +469,36 @@
       font-weight: 900;
     }
 
+    .photo-color-samplers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      grid-column: 1 / -1;
+    }
+
+    .photo-color-sampler {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .photo-color-sampler canvas {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      border: 1px solid #eee8f4;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
     .field {
       display: grid;
       gap: 8px;
@@ -770,6 +800,7 @@
       .progress-step { justify-content: center; flex-direction: column; gap: 4px; padding: 4px; font-size: 11px; }
       .template-card { grid-template-columns: 100px 1fr; }
       .template-thumb { width: 100px; }
+      .input-layout { padding-bottom: 86px; }
       .section-card { padding: 18px; }
       .upload-box { grid-template-columns: 40px 1fr; }
       .upload-state { grid-column: 2; }
@@ -950,7 +981,8 @@
         name: 'ハートメッセージ',
         description: '写真2枚と色を選べるハート',
         count: 2,
-        src: 'assets/templates/template-heart-message.svg',
+        src: 'assets/templates/template-heart-message-mask.jpg',
+        maskSrc: 'assets/templates/template-heart-message-mask.jpg',
         renderMode: 'heartMessage',
         slots: [{ type: 'full' }, { type: 'heart' }],
         colorSlots: [
@@ -1242,37 +1274,66 @@
         const row = document.createElement('div');
         row.className = 'color-field';
         const currentColor = state.colors[slot.id] || slot.defaultColor || '#ffffff';
-        const canUseEyeDropper = 'EyeDropper' in window;
         row.innerHTML = `
           <input type="color" value="${escapeHtml(currentColor)}" data-color-slot="${slot.id}" aria-label="${escapeHtml(slot.label)}" />
           <span>
             <strong>${escapeHtml(slot.label)}</strong>
-            <small>${escapeHtml(slot.note || '好きな色を選べます')}</small>
+            <small>${escapeHtml(slot.note || '好きな色を選べます')}。写真をタップして色も取れます。</small>
           </span>
-          <button class="eyedropper-button" type="button" data-eyedropper="${slot.id}" ${canUseEyeDropper ? '' : 'hidden'}>スポイト</button>
         `;
         const input = row.querySelector('input');
         input.addEventListener('input', event => {
           state.colors[slot.id] = event.target.value;
           render();
         });
-        const eyedropper = row.querySelector('[data-eyedropper]');
-        eyedropper?.addEventListener('click', async () => {
-          if (!('EyeDropper' in window)) {
-            showToast('このブラウザではスポイトが使えません');
-            return;
-          }
-          try {
-            const result = await new EyeDropper().open();
-            state.colors[slot.id] = result.sRGBHex;
-            input.value = result.sRGBHex;
+        const samplers = document.createElement('div');
+        samplers.className = 'photo-color-samplers';
+        state.photos.forEach((photo, index) => {
+          if (!photo.image) return;
+          const sampler = document.createElement('div');
+          sampler.className = 'photo-color-sampler';
+          sampler.innerHTML = `<canvas width="144" height="144" aria-label="写真${index + 1}から色を選ぶ"></canvas><span>写真${index + 1}</span>`;
+          const sampleCanvas = sampler.querySelector('canvas');
+          drawSamplerCanvas(sampleCanvas, photo.image);
+          const pickColor = event => {
+            event.preventDefault();
+            const color = sampleColorFromCanvas(sampleCanvas, event);
+            if (!color) return;
+            state.colors[slot.id] = color;
+            input.value = color;
             render();
-          } catch (error) {
-            showToast('スポイトをキャンセルしました');
-          }
+            showToast(`写真${index + 1}から色を選びました`);
+          };
+          sampleCanvas.addEventListener('pointerdown', pickColor);
+          sampler.addEventListener('pointerdown', pickColor);
+          samplers.appendChild(sampler);
         });
+        if (samplers.children.length) row.appendChild(samplers);
         els.colorInputList.appendChild(row);
       });
+    }
+
+    function drawSamplerCanvas(sampleCanvas, image) {
+      const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+      const width = sampleCanvas.width;
+      const height = sampleCanvas.height;
+      sampleCtx.clearRect(0, 0, width, height);
+      sampleCtx.fillStyle = '#fff';
+      sampleCtx.fillRect(0, 0, width, height);
+      const scale = Math.min(width / image.width, height / image.height);
+      const drawWidth = image.width * scale;
+      const drawHeight = image.height * scale;
+      const dx = (width - drawWidth) / 2;
+      const dy = (height - drawHeight) / 2;
+      sampleCtx.drawImage(image, dx, dy, drawWidth, drawHeight);
+    }
+
+    function sampleColorFromCanvas(sampleCanvas, event) {
+      const rect = sampleCanvas.getBoundingClientRect();
+      const x = clamp(Math.floor((event.clientX - rect.left) * (sampleCanvas.width / rect.width)), 0, sampleCanvas.width - 1);
+      const y = clamp(Math.floor((event.clientY - rect.top) * (sampleCanvas.height / rect.height)), 0, sampleCanvas.height - 1);
+      const data = sampleCanvas.getContext('2d', { willReadFrequently: true }).getImageData(x, y, 1, 1).data;
+      return `#${[data[0], data[1], data[2]].map(value => value.toString(16).padStart(2, '0')).join('')}`;
     }
 
     function loadPhoto(index, file) {
@@ -1464,6 +1525,10 @@
     }
 
     function drawCover(image, width, height, photo) {
+      drawCoverOn(ctx, image, width, height, photo);
+    }
+
+    function drawCoverOn(context, image, width, height, photo) {
       const imageRatio = image.width / image.height;
       const slotRatio = width / height;
       let drawWidth;
@@ -1477,7 +1542,7 @@
       }
       const dx = -drawWidth / 2 + photo.x * width * .45;
       const dy = -drawHeight / 2 + photo.y * height * .45;
-      ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+      context.drawImage(image, dx, dy, drawWidth, drawHeight);
     }
 
     function distanceBetween(a, b) {
@@ -1554,80 +1619,104 @@
       ctx.restore();
     }
 
-    function heartPath(context, cx, cy, width, height, rotate = 0) {
-      const w = width / 2;
-      const h = height / 2;
-      context.save();
-      context.translate(cx, cy);
-      context.rotate(rotate);
-      context.beginPath();
-      context.moveTo(0, h * .78);
-      context.bezierCurveTo(-w * .95, h * .2, -w * 1.02, -h * .48, -w * .44, -h * .62);
-      context.bezierCurveTo(-w * .16, -h * .72, 0, -h * .5, 0, -h * .28);
-      context.bezierCurveTo(w * .04, -h * .55, w * .3, -h * .77, w * .62, -h * .66);
-      context.bezierCurveTo(w * 1.18, -h * .44, w * .94, h * .34, 0, h * .78);
-      context.closePath();
-      context.restore();
+    function createWorkCanvas() {
+      const work = document.createElement('canvas');
+      work.width = canvas.width;
+      work.height = canvas.height;
+      return work;
     }
 
-    function fillHeart(cx, cy, width, height, color, rotate = 0) {
-      ctx.save();
-      heartPath(ctx, cx, cy, width, height, rotate);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.restore();
+    function colorDistance(r, g, b, target) {
+      return Math.hypot(r - target[0], g - target[1], b - target[2]);
     }
 
-    function clipHeart(cx, cy, width, height, rotate = 0) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotate);
-      const w = width / 2;
-      const h = height / 2;
-      ctx.beginPath();
-      ctx.moveTo(0, h * .78);
-      ctx.bezierCurveTo(-w * .95, h * .2, -w * 1.02, -h * .48, -w * .44, -h * .62);
-      ctx.bezierCurveTo(-w * .16, -h * .72, 0, -h * .5, 0, -h * .28);
-      ctx.bezierCurveTo(w * .04, -h * .55, w * .3, -h * .77, w * .62, -h * .66);
-      ctx.bezierCurveTo(w * 1.18, -h * .44, w * .94, h * .34, 0, h * .78);
-      ctx.closePath();
-      ctx.clip();
-    }
+    async function getHeartMessageMasks(template) {
+      if (template.maskCache) return template.maskCache;
+      const image = await loadImage(template.maskSrc || template.src);
+      const source = createWorkCanvas();
+      const sourceCtx = source.getContext('2d', { willReadFrequently: true });
+      sourceCtx.drawImage(image, 0, 0, source.width, source.height);
+      const pixels = sourceCtx.getImageData(0, 0, source.width, source.height);
+      const blue = sourceCtx.createImageData(source.width, source.height);
+      const green = sourceCtx.createImageData(source.width, source.height);
+      const white = sourceCtx.createImageData(source.width, source.height);
+      const blueTarget = [15, 160, 224];
+      const greenTarget = [75, 195, 55];
+      const whiteTarget = [255, 255, 255];
+      const greenBounds = { minX: source.width, minY: source.height, maxX: 0, maxY: 0 };
 
-    function strokeMiniHeart(cx, cy, size, rotate = 0) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotate);
-      ctx.scale(size / 100, size / 100);
-      ctx.beginPath();
-      ctx.moveTo(0, 32);
-      ctx.bezierCurveTo(-42, 8, -48, -22, -20, -29);
-      ctx.bezierCurveTo(-7, -32, 0, -20, 0, -10);
-      ctx.bezierCurveTo(8, -25, 26, -34, 42, -22);
-      ctx.bezierCurveTo(67, -3, 35, 25, 0, 48);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 8;
-      ctx.lineJoin = 'round';
-      ctx.stroke();
-      ctx.restore();
-    }
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const pixelIndex = i / 4;
+        const x = pixelIndex % source.width;
+        const y = Math.floor(pixelIndex / source.width);
+        const r = pixels.data[i];
+        const g = pixels.data[i + 1];
+        const b = pixels.data[i + 2];
+        const blueDistance = colorDistance(r, g, b, blueTarget);
+        const greenDistance = colorDistance(r, g, b, greenTarget);
+        const whiteDistance = colorDistance(r, g, b, whiteTarget);
 
-    function drawCharcoalHatch() {
-      ctx.save();
-      ctx.fillStyle = 'rgba(37, 35, 36, .50)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = 'rgba(37, 35, 36, .28)';
-      ctx.lineWidth = 2;
-      for (let x = -canvas.height; x < canvas.width; x += 18) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x + canvas.height, canvas.height);
-        ctx.stroke();
+        if (blueDistance < 115 && blueDistance < greenDistance) {
+          blue.data[i] = 255;
+          blue.data[i + 1] = 255;
+          blue.data[i + 2] = 255;
+          blue.data[i + 3] = 255;
+        }
+        if (greenDistance < 105 && greenDistance < blueDistance) {
+          green.data[i] = 255;
+          green.data[i + 1] = 255;
+          green.data[i + 2] = 255;
+          green.data[i + 3] = 255;
+          greenBounds.minX = Math.min(greenBounds.minX, x);
+          greenBounds.minY = Math.min(greenBounds.minY, y);
+          greenBounds.maxX = Math.max(greenBounds.maxX, x);
+          greenBounds.maxY = Math.max(greenBounds.maxY, y);
+        }
+        if (whiteDistance < 70 && r > 205 && g > 205 && b > 205) {
+          white.data[i] = 255;
+          white.data[i + 1] = 255;
+          white.data[i + 2] = 255;
+          white.data[i + 3] = 255;
+        }
       }
-      ctx.restore();
+
+      const blueMask = createWorkCanvas();
+      const greenMask = createWorkCanvas();
+      const whiteMask = createWorkCanvas();
+      blueMask.getContext('2d').putImageData(blue, 0, 0);
+      greenMask.getContext('2d').putImageData(green, 0, 0);
+      whiteMask.getContext('2d').putImageData(white, 0, 0);
+      template.maskCache = { blueMask, greenMask, whiteMask, greenBounds };
+      return template.maskCache;
     }
 
-    function drawHeartMessageTemplate() {
+    function drawSolidThroughMask(mask, color) {
+      const work = createWorkCanvas();
+      const workCtx = work.getContext('2d');
+      workCtx.fillStyle = color;
+      workCtx.fillRect(0, 0, work.width, work.height);
+      workCtx.globalCompositeOperation = 'destination-in';
+      workCtx.drawImage(mask, 0, 0);
+      ctx.drawImage(work, 0, 0);
+    }
+
+    function drawPhotoThroughMask(photo, mask, bounds) {
+      if (!photo?.image) return;
+      const work = createWorkCanvas();
+      const workCtx = work.getContext('2d');
+      const width = Math.max(1, bounds.maxX - bounds.minX + 1);
+      const height = Math.max(1, bounds.maxY - bounds.minY + 1);
+      workCtx.save();
+      workCtx.translate(bounds.minX + width / 2, bounds.minY + height / 2);
+      drawCoverOn(workCtx, photo.image, width, height, photo);
+      workCtx.restore();
+      workCtx.globalCompositeOperation = 'destination-in';
+      workCtx.drawImage(mask, 0, 0);
+      ctx.drawImage(work, 0, 0);
+    }
+
+    async function drawHeartMessageTemplate(template) {
+      const masks = await getHeartMessageMasks(template);
       const color = state.colors.heartColor || '#ffffff';
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (state.photos[0]?.image) {
@@ -1639,31 +1728,17 @@
         ctx.fillStyle = '#f571ad';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      drawCharcoalHatch();
-      fillHeart(220, 340, 650, 610, color, -.22);
-      fillHeart(595, 1008, 670, 650, color, -.08);
-
-      if (state.photos[1]?.image) {
-        clipHeart(210, 350, 540, 500, -.22);
-        drawCover(state.photos[1].image, 540, 500, state.photos[1]);
-        ctx.restore();
-      }
-
-      [
-        [645, 235, 45, .2],
-        [618, 455, 38, -.2],
-        [655, 625, 42, .05],
-        [462, 700, 32, .06],
-        [178, 825, 31, .15],
-        [135, 1030, 27, .05],
-        [218, 1192, 53, -.18]
-      ].forEach(([x, y, size, rotate]) => strokeMiniHeart(x, y, size, rotate));
+      ctx.fillStyle = 'rgba(37, 35, 36, .50)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawSolidThroughMask(masks.blueMask, color);
+      drawPhotoThroughMask(state.photos[1], masks.greenMask, masks.greenBounds);
+      drawSolidThroughMask(masks.whiteMask, '#ffffff');
     }
 
     async function render() {
       const template = currentTemplate();
       if (template.renderMode === 'heartMessage') {
-        drawHeartMessageTemplate();
+        await drawHeartMessageTemplate(template);
       } else {
         const bg = await loadImage(template.src);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
