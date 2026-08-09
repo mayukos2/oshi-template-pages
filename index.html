@@ -819,7 +819,7 @@
 
     .range-field {
       display: grid;
-      grid-template-columns: 54px 1fr;
+      grid-template-columns: 54px 28px 1fr 28px;
       gap: 12px;
       align-items: center;
       min-height: 48px;
@@ -828,19 +828,22 @@
     }
 
     .range-field input {
+      grid-column: 3;
       width: 100%;
       min-height: 42px;
       accent-color: var(--accent);
     }
 
-    .range-guide {
-      grid-column: 2;
-      margin-top: -8px;
+    .range-side {
       color: var(--muted);
       font-size: 11px;
       font-weight: 800;
-      line-height: 1.4;
+      text-align: center;
+      white-space: nowrap;
     }
+
+    .range-side-left { grid-column: 2; }
+    .range-side-right { grid-column: 4; }
 
     .range-field input::-webkit-slider-runnable-track {
       height: 8px;
@@ -999,7 +1002,7 @@
       }
       .back-actions .danger-button { grid-column: 1 / -1; }
       .preview-label small { display: none; }
-      .range-field { grid-template-columns: 64px 1fr; }
+      .range-field { grid-template-columns: 64px 28px 1fr 28px; }
       .photo-tab { min-height: 48px; padding-left: 16px; padding-right: 16px; font-size: 13px; }
       .quick-adjust button { min-height: 50px; }
     }
@@ -1108,9 +1111,9 @@
           <div class="section-card">
             <div class="section-title-row"><span class="mini-step">1</span><h3>写真を調整</h3></div>
             <div id="photoTabs" class="photo-tabs"></div>
-            <label class="range-field"><span>拡大</span><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /><small class="range-guide">左: 小 / 右: 大</small></label>
-            <label class="range-field"><span>左右</span><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-guide">左 / 右</small></label>
-            <label class="range-field"><span>上下</span><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-guide">下 / 上</small></label>
+            <label class="range-field"><span>拡大</span><small class="range-side range-side-left">小</small><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /><small class="range-side range-side-right">大</small></label>
+            <label class="range-field"><span>左右</span><small class="range-side range-side-left">左</small><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-side range-side-right">右</small></label>
+            <label class="range-field"><span>上下</span><small class="range-side range-side-left">下</small><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-side range-side-right">上</small></label>
             <div class="quick-adjust" aria-label="写真のかんたん調整">
               <button type="button" data-adjust="zoom-out">小さく</button>
               <button type="button" data-adjust="up">上へ</button>
@@ -1211,14 +1214,12 @@
         renderMode: 'colorGuide',
         basePhotoIndex: 0,
         guideColors: [
-          { id: 'filmPink', kind: 'photo', photoIndex: 0, target: [245, 111, 172], tolerance: 90, fallbackColor: '#f56fac' },
           { id: 'filmYellow', kind: 'photo', photoIndex: 1, target: [255, 205, 62], tolerance: 90, fallbackColor: '#ffcd3e' },
           { id: 'filmGreen', kind: 'photo', photoIndex: 2, target: [75, 195, 55], tolerance: 90, fallbackColor: '#4bc337' },
           { id: 'filmFrame', kind: 'color', slotId: 'filmFrameColor', target: [0, 0, 0], tolerance: 95, fallbackColor: '#000000' },
           { id: 'filmWhite', kind: 'solid', target: [255, 255, 255], tolerance: 80, color: '#ffffff' }
         ],
         guideLayers: [
-          { id: 'filmPink', kind: 'photo', photoIndex: 0, fallbackColor: '#f56fac' },
           { id: 'filmYellow', kind: 'photo', photoIndex: 1, fallbackColor: '#ffcd3e' },
           { id: 'filmGreen', kind: 'photo', photoIndex: 2, fallbackColor: '#4bc337' },
           { id: 'filmFrame', kind: 'color', slotId: 'filmFrameColor', fallbackColor: '#000000' },
@@ -1557,10 +1558,7 @@
           const defaultValue = slot.opacityMode === 'transparency'
             ? (slot.defaultTransparency ?? 0)
             : (slot.defaultOpacity ?? 1);
-          const guide = slot.opacityMode === 'transparency'
-            ? '左: くっきり / 右: 透明'
-            : '薄 / 濃';
-          opacityField.innerHTML = `<span>透明度</span><input type="range" min="0" max="1" step="0.01" value="${state.opacities[slot.id] ?? defaultValue}" /><small class="range-guide">${guide}</small>`;
+          opacityField.innerHTML = `<span>透明度</span><small class="range-side range-side-left">薄</small><input type="range" min="0" max="1" step="0.01" value="${state.opacities[slot.id] ?? defaultValue}" /><small class="range-side range-side-right">濃</small>`;
           const opacityInput = opacityField.querySelector('input');
           opacityInput.addEventListener('input', event => {
             state.opacities[slot.id] = Number(event.target.value);
