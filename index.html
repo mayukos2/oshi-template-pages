@@ -833,6 +833,15 @@
       accent-color: var(--accent);
     }
 
+    .range-guide {
+      grid-column: 2;
+      margin-top: -8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
     .range-field input::-webkit-slider-runnable-track {
       height: 8px;
       border-radius: 999px;
@@ -990,7 +999,7 @@
       }
       .back-actions .danger-button { grid-column: 1 / -1; }
       .preview-label small { display: none; }
-      .range-field { grid-template-columns: 46px 1fr; }
+      .range-field { grid-template-columns: 64px 1fr; }
       .photo-tab { min-height: 48px; padding-left: 16px; padding-right: 16px; font-size: 13px; }
       .quick-adjust button { min-height: 50px; }
     }
@@ -1099,9 +1108,9 @@
           <div class="section-card">
             <div class="section-title-row"><span class="mini-step">1</span><h3>写真を調整</h3></div>
             <div id="photoTabs" class="photo-tabs"></div>
-            <label class="range-field"><span>拡大</span><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /></label>
-            <label class="range-field"><span>左右</span><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
-            <label class="range-field"><span>上下</span><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /></label>
+            <label class="range-field"><span>拡大</span><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /><small class="range-guide">左: 小 / 右: 大</small></label>
+            <label class="range-field"><span>左右</span><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-guide">左 / 右</small></label>
+            <label class="range-field"><span>上下</span><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-guide">下 / 上</small></label>
             <div class="quick-adjust" aria-label="写真のかんたん調整">
               <button type="button" data-adjust="zoom-out">小さく</button>
               <button type="button" data-adjust="up">上へ</button>
@@ -1200,6 +1209,7 @@
         src: 'assets/templates/template-movie-mask.jpg',
         maskSrc: 'assets/templates/template-movie-mask.jpg',
         renderMode: 'colorGuide',
+        basePhotoIndex: 0,
         guideColors: [
           { id: 'filmPink', kind: 'photo', photoIndex: 0, target: [245, 111, 172], tolerance: 90, fallbackColor: '#f56fac' },
           { id: 'filmYellow', kind: 'photo', photoIndex: 1, target: [255, 205, 62], tolerance: 90, fallbackColor: '#ffcd3e' },
@@ -1351,6 +1361,9 @@
         }
         if (typeof slot.defaultOpacity === 'number' && typeof state.opacities[slot.id] !== 'number') {
           state.opacities[slot.id] = slot.defaultOpacity;
+        }
+        if (typeof slot.defaultTransparency === 'number' && typeof state.opacities[slot.id] !== 'number') {
+          state.opacities[slot.id] = slot.defaultTransparency;
         }
         if (!state.colorSamplers[slot.id]) {
           state.colorSamplers[slot.id] = { photoIndex: 0, zoom: 1.8 };
@@ -1538,10 +1551,16 @@
           render();
         });
         row.querySelector('[data-photo-sampler]').addEventListener('click', () => openSamplerModal(slot.id));
-        if (typeof slot.defaultOpacity === 'number') {
+        if (typeof slot.defaultOpacity === 'number' || typeof slot.defaultTransparency === 'number') {
           const opacityField = document.createElement('label');
           opacityField.className = 'range-field';
-          opacityField.innerHTML = `<span>透明度</span><input type="range" min="0" max="1" step="0.01" value="${state.opacities[slot.id] ?? slot.defaultOpacity}" />`;
+          const defaultValue = slot.opacityMode === 'transparency'
+            ? (slot.defaultTransparency ?? 0)
+            : (slot.defaultOpacity ?? 1);
+          const guide = slot.opacityMode === 'transparency'
+            ? '左: くっきり / 右: 透明'
+            : '薄 / 濃';
+          opacityField.innerHTML = `<span>透明度</span><input type="range" min="0" max="1" step="0.01" value="${state.opacities[slot.id] ?? defaultValue}" /><small class="range-guide">${guide}</small>`;
           const opacityInput = opacityField.querySelector('input');
           opacityInput.addEventListener('input', event => {
             state.opacities[slot.id] = Number(event.target.value);
@@ -1777,7 +1796,7 @@
       const photo = activePhoto() || emptyPhoto();
       els.zoomInput.value = photo.zoom;
       els.xInput.value = photo.x;
-      els.yInput.value = photo.y;
+      els.yInput.value = -photo.y;
     }
 
     function updateActivePhotoFromControls() {
@@ -1785,7 +1804,7 @@
       if (!photo) return;
       photo.zoom = Number(els.zoomInput.value);
       photo.x = Number(els.xInput.value);
-      photo.y = Number(els.yInput.value);
+      photo.y = -Number(els.yInput.value);
       render();
     }
 
@@ -2013,6 +2032,14 @@
       return `rgba(${r}, ${g}, ${b}, ${clamp(opacity, 0, 1)})`;
     }
 
+    function colorSlotAlpha(template, slotId, fallback = 1) {
+      const slot = (template.colorSlots || []).find(item => item.id === slotId);
+      const value = state.opacities[slotId] ?? fallback;
+      return slot?.opacityMode === 'transparency'
+        ? 1 - clamp(value, 0, 1)
+        : clamp(value, 0, 1);
+    }
+
     async function getHeartMessageMasks(template) {
       if (template.maskCache) return template.maskCache;
       const image = await loadImage(template.maskSrc || template.src);
@@ -2144,6 +2171,12 @@
     async function drawColorGuideTemplate(template) {
       const masks = await getColorGuideMasks(template);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (typeof template.basePhotoIndex === 'number' && state.photos[template.basePhotoIndex]?.image) {
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        drawCover(state.photos[template.basePhotoIndex].image, canvas.width, canvas.height, state.photos[template.basePhotoIndex]);
+        ctx.restore();
+      }
       template.guideLayers.forEach(layer => {
         const mask = masks[layer.id];
         if (!mask || mask.isEmpty) return;
@@ -2156,9 +2189,10 @@
           }
         }
         if (layer.kind === 'color') {
+          const alpha = colorSlotAlpha(template, layer.slotId, 1);
           const color = colorWithOpacity(
             state.colors[layer.slotId] || layer.fallbackColor || '#000000',
-            state.opacities[layer.slotId] ?? 1
+            alpha
           );
           drawSolidThroughMask(mask.canvas, color);
         }
