@@ -761,6 +761,7 @@
       background: #fff;
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
+      aspect-ratio: 9 / 16;
     }
 
     #previewCanvas {
@@ -944,8 +945,7 @@
         display: none;
       }
       .preview-pane .phone-frame {
-        width: min(100%, 240px);
-        max-height: 42vh;
+        width: min(100%, 240px, calc(42vh * .5625));
         margin: 0 auto;
       }
       .adjust-column { position: static; max-width: 520px; width: 100%; margin: 0 auto; }
