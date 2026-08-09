@@ -758,7 +758,7 @@
     .phone-frame {
       overflow: hidden;
       border-radius: 8px;
-      background: #fff;
+      background: transparent;
       border: 0;
       box-shadow: var(--shadow);
       aspect-ratio: 9 / 16;
@@ -959,6 +959,7 @@
       .preview-pane .phone-frame {
         width: min(100%, 240px, calc(42vh * .5625));
         margin: 0 auto;
+        box-shadow: none;
       }
       .adjust-column { position: static; max-width: 520px; width: 100%; margin: 0 auto; }
     }
