@@ -1115,6 +1115,7 @@
             <label class="range-field"><span>拡大</span><small class="range-side range-side-left">小</small><input id="zoomInput" type="range" min="1" max="2.8" step="0.01" value="1" /><small class="range-side range-side-right">大</small></label>
             <label class="range-field"><span>左右</span><small class="range-side range-side-left">左</small><input id="xInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-side range-side-right">右</small></label>
             <label class="range-field"><span>上下</span><small class="range-side range-side-left">下</small><input id="yInput" type="range" min="-1" max="1" step="0.01" value="0" /><small class="range-side range-side-right">上</small></label>
+            <label class="range-field"><span>角度</span><small class="range-side range-side-left">左</small><input id="rotationInput" type="range" min="-45" max="45" step="1" value="0" /><small class="range-side range-side-right">右</small></label>
             <div class="quick-adjust" aria-label="写真のかんたん調整">
               <button type="button" data-adjust="zoom-out">小さく</button>
               <button type="button" data-adjust="up">上へ</button>
@@ -1122,6 +1123,9 @@
               <button type="button" data-adjust="left">左へ</button>
               <button type="button" data-adjust="down">下へ</button>
               <button type="button" data-adjust="right">右へ</button>
+              <button type="button" data-adjust="rotate-left">左回転</button>
+              <button type="button" data-adjust="rotate-reset">角度戻す</button>
+              <button type="button" data-adjust="rotate-right">右回転</button>
             </div>
             <button id="resetPhotoBtn" class="text-button" type="button">この写真の位置をリセット</button>
           </div>
@@ -1286,6 +1290,7 @@
       zoomInput: document.getElementById('zoomInput'),
       xInput: document.getElementById('xInput'),
       yInput: document.getElementById('yInput'),
+      rotationInput: document.getElementById('rotationInput'),
       resetPhotoBtn: document.getElementById('resetPhotoBtn'),
       editInputBtn: document.getElementById('editInputBtn'),
       previewTemplateBtn: document.getElementById('previewTemplateBtn'),
@@ -1331,7 +1336,7 @@
     }
 
     function emptyPhoto() {
-      return { fileName: '', url: '', image: null, zoom: 1, x: 0, y: 0 };
+      return { fileName: '', url: '', image: null, zoom: 1, x: 0, y: 0, rotation: 0 };
     }
 
     function ensurePhotoSlots() {
@@ -1738,6 +1743,7 @@
       photo.zoom = 1;
       photo.x = 0;
       photo.y = 0;
+      photo.rotation = 0;
       const img = new Image();
       img.onload = () => {
         photo.image = img;
@@ -1796,6 +1802,7 @@
       els.zoomInput.value = photo.zoom;
       els.xInput.value = photo.x;
       els.yInput.value = -photo.y;
+      els.rotationInput.value = photo.rotation || 0;
     }
 
     function updateActivePhotoFromControls() {
@@ -1804,6 +1811,7 @@
       photo.zoom = Number(els.zoomInput.value);
       photo.x = Number(els.xInput.value);
       photo.y = -Number(els.yInput.value);
+      photo.rotation = Number(els.rotationInput.value);
       render();
     }
 
@@ -1813,6 +1821,7 @@
       photo.zoom = 1;
       photo.x = 0;
       photo.y = 0;
+      photo.rotation = 0;
       syncControlsFromPhoto();
       render();
       showToast('写真位置をリセットしました');
@@ -1853,12 +1862,16 @@
       if (!photo) return;
       const moveStep = 0.08;
       const zoomStep = 0.08;
+      const rotateStep = 3;
       if (action === 'left') photo.x = clamp(photo.x - moveStep, -1, 1);
       if (action === 'right') photo.x = clamp(photo.x + moveStep, -1, 1);
       if (action === 'up') photo.y = clamp(photo.y - moveStep, -1, 1);
       if (action === 'down') photo.y = clamp(photo.y + moveStep, -1, 1);
       if (action === 'zoom-in') photo.zoom = clamp(photo.zoom + zoomStep, 1, 2.8);
       if (action === 'zoom-out') photo.zoom = clamp(photo.zoom - zoomStep, 1, 2.8);
+      if (action === 'rotate-left') photo.rotation = clamp((photo.rotation || 0) - rotateStep, -45, 45);
+      if (action === 'rotate-right') photo.rotation = clamp((photo.rotation || 0) + rotateStep, -45, 45);
+      if (action === 'rotate-reset') photo.rotation = 0;
       syncControlsFromPhoto();
       render();
     }
@@ -1922,20 +1935,28 @@
     }
 
     function drawCoverOn(context, image, width, height, photo) {
+      const rotation = ((Number(photo.rotation) || 0) * Math.PI) / 180;
+      const cos = Math.abs(Math.cos(rotation));
+      const sin = Math.abs(Math.sin(rotation));
+      const coverWidth = width * cos + height * sin;
+      const coverHeight = width * sin + height * cos;
       const imageRatio = image.width / image.height;
-      const slotRatio = width / height;
+      const slotRatio = coverWidth / coverHeight;
       let drawWidth;
       let drawHeight;
       if (imageRatio > slotRatio) {
-        drawHeight = height * photo.zoom;
+        drawHeight = coverHeight * photo.zoom;
         drawWidth = drawHeight * imageRatio;
       } else {
-        drawWidth = width * photo.zoom;
+        drawWidth = coverWidth * photo.zoom;
         drawHeight = drawWidth / imageRatio;
       }
       const dx = -drawWidth / 2 + photo.x * width * .45;
       const dy = -drawHeight / 2 + photo.y * height * .45;
+      context.save();
+      context.rotate(rotation);
       context.drawImage(image, dx, dy, drawWidth, drawHeight);
+      context.restore();
     }
 
     function distanceBetween(a, b) {
@@ -2318,7 +2339,7 @@
     els.editInputBtn.addEventListener('click', () => setStage('input'));
     els.restartBtn.addEventListener('click', restart);
     els.bulkPhotoInput.addEventListener('change', event => loadPhotos(event.target.files));
-    [els.zoomInput, els.xInput, els.yInput].forEach(input => input.addEventListener('input', updateActivePhotoFromControls));
+    [els.zoomInput, els.xInput, els.yInput, els.rotationInput].forEach(input => input.addEventListener('input', updateActivePhotoFromControls));
     els.resetPhotoBtn.addEventListener('click', resetActivePhoto);
     document.querySelectorAll('[data-adjust]').forEach(button => {
       button.addEventListener('click', () => quickAdjust(button.dataset.adjust));
