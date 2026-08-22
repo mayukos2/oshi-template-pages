@@ -172,10 +172,90 @@
       font-weight: 600;
     }
 
+    .photo-count-choice {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 520px;
+      margin: 0 auto 18px;
+    }
+
+    .photo-count-choice button {
+      min-height: 58px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(85,77,106,.10);
+    }
+
+    .photo-count-choice button.is-active {
+      border-color: var(--pink-strong);
+      border-width: 3px;
+      background:
+        linear-gradient(135deg, rgba(255, 232, 243, .98), rgba(255, 215, 234, .96)),
+        #ffe7f2;
+      color: var(--accent-dark);
+      box-shadow: 0 0 0 5px rgba(231, 91, 159, .18), 0 16px 36px rgba(180, 76, 130, .18);
+    }
+
+    .count-anchor-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 auto 18px;
+    }
+
+    .count-anchor-nav[hidden] { display: none; }
+
+    .count-anchor-nav button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: #fff;
+      color: var(--accent-dark);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
     .template-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .template-count-section {
+      scroll-margin-top: 18px;
+    }
+
+    .template-count-heading {
+      margin: 0 0 10px;
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .template-group-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
+    }
+
+    .template-empty {
+      margin: 0;
+      padding: 20px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.72);
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
     }
 
     .template-card {
@@ -940,6 +1020,7 @@
 
     @media (max-width: 820px) {
       .template-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+      .template-group-grid { grid-template-columns: 1fr; }
       .template-card { display: grid; grid-template-columns: 118px 1fr; gap: 14px; align-items: center; }
       .template-thumb { width: 118px; }
       .template-info { padding: 0; }
@@ -973,6 +1054,8 @@
       .progress i { display: none; }
       .progress-step { justify-content: center; flex-direction: column; gap: 4px; padding: 4px; font-size: 11px; }
       .template-card { grid-template-columns: 100px 1fr; }
+      .photo-count-choice { gap: 8px; }
+      .photo-count-choice button { min-height: 52px; font-size: 14px; }
       .template-thumb { width: 100px; }
       .input-layout { padding-bottom: 86px; }
       .section-card { padding: 18px; }
@@ -1035,8 +1118,13 @@
       <div class="screen-heading">
         <p class="screen-step">STEP 1</p>
         <h2 id="templateHeading">テンプレを選ぶ</h2>
-        <p>まずは3つのテンプレだけ。ピンクの部分に写真が入ります。</p>
+        <p>写真の枚数を選んでから、使いたいフレームを選びます。</p>
       </div>
+      <div class="photo-count-choice" aria-label="写真の枚数を選ぶ">
+        <button id="singlePhotoModeBtn" type="button" data-photo-mode="single">写真1枚</button>
+        <button id="multiPhotoModeBtn" type="button" data-photo-mode="multi">複数枚</button>
+      </div>
+      <div id="countAnchorNav" class="count-anchor-nav" aria-label="写真枚数ごとの移動リンク" hidden></div>
       <div id="templateGrid" class="template-grid"></div>
       <div class="screen-actions">
         <button id="toInputBtn" class="primary-button" type="button">このテンプレで作る</button>
@@ -1273,6 +1361,9 @@
       },
       progress: Array.from(document.querySelectorAll('.progress-step')),
       templateGrid: document.getElementById('templateGrid'),
+      singlePhotoModeBtn: document.getElementById('singlePhotoModeBtn'),
+      multiPhotoModeBtn: document.getElementById('multiPhotoModeBtn'),
+      countAnchorNav: document.getElementById('countAnchorNav'),
       toInputBtn: document.getElementById('toInputBtn'),
       selectedTemplateName: document.getElementById('selectedTemplateName'),
       bulkPhotoInput: document.getElementById('bulkPhotoInput'),
@@ -1324,6 +1415,7 @@
       colors: {},
       opacities: {},
       colorSamplers: {},
+      photoCountMode: 'multi',
       samplerModal: null,
       activePhoto: 0,
       drag: null
@@ -1406,34 +1498,109 @@
       showToast.timer = setTimeout(() => els.toast.classList.remove('is-visible'), 1800);
     }
 
-    function renderTemplates() {
-      els.templateGrid.innerHTML = '';
-      templates.forEach(template => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = `template-card${template.id === state.templateId ? ' is-selected' : ''}`;
-        card.innerHTML = `
-          <div class="template-thumb">
-            <img src="${template.src}" alt="${template.name}の見本" />
-            <span class="template-count">写真${template.count}枚</span>
-            <span class="template-selected-label">選択中</span>
-          </div>
-          <div class="template-info">
-            <strong>${template.name}</strong>
-            <small>${template.description}</small>
-          </div>
-        `;
-        card.addEventListener('click', () => {
-          state.templateId = template.id;
-          ensurePhotoSlots();
-          ensureColorSlots();
-          renderTemplates();
-          renderInput();
-          renderPreviewControls();
-          render();
-        });
-        els.templateGrid.appendChild(card);
+    function templateMatchesPhotoMode(template) {
+      return state.photoCountMode === 'single' ? template.count === 1 : template.count > 1;
+    }
+
+    function visibleTemplates() {
+      return templates.filter(templateMatchesPhotoMode);
+    }
+
+    function ensureVisibleTemplateSelection() {
+      const visible = visibleTemplates();
+      if (!visible.length) return;
+      if (!visible.some(template => template.id === state.templateId)) {
+        state.templateId = visible[0].id;
+        ensurePhotoSlots();
+        ensureTextSlots();
+        ensureColorSlots();
+      }
+    }
+
+    function createTemplateCard(template) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `template-card${template.id === state.templateId ? ' is-selected' : ''}`;
+      card.innerHTML = `
+        <div class="template-thumb">
+          <img src="${template.src}" alt="${template.name}の見本" />
+          <span class="template-count">写真${template.count}枚</span>
+          <span class="template-selected-label">選択中</span>
+        </div>
+        <div class="template-info">
+          <strong>${template.name}</strong>
+          <small>${template.description}</small>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        state.templateId = template.id;
+        ensurePhotoSlots();
+        ensureColorSlots();
+        renderTemplates();
+        renderInput();
+        renderPreviewControls();
+        render();
       });
+      return card;
+    }
+
+    function renderCountAnchorNav(counts) {
+      els.countAnchorNav.innerHTML = '';
+      const shouldShow = state.photoCountMode === 'multi' && counts.length > 0;
+      els.countAnchorNav.hidden = !shouldShow;
+      if (!shouldShow) return;
+      counts.forEach(count => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `写真${count}枚`;
+        button.addEventListener('click', () => {
+          const section = document.getElementById(`template-count-${count}`);
+          if (!section) return;
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        els.countAnchorNav.appendChild(button);
+      });
+    }
+
+    function renderTemplates() {
+      ensureVisibleTemplateSelection();
+      els.singlePhotoModeBtn.classList.toggle('is-active', state.photoCountMode === 'single');
+      els.multiPhotoModeBtn.classList.toggle('is-active', state.photoCountMode === 'multi');
+      els.templateGrid.innerHTML = '';
+      const visible = visibleTemplates();
+      els.toInputBtn.disabled = !visible.length;
+      const counts = Array.from(new Set(visible.map(template => template.count))).sort((a, b) => a - b);
+      renderCountAnchorNav(counts);
+      if (!visible.length) {
+        const empty = document.createElement('p');
+        empty.className = 'template-empty';
+        empty.textContent = state.photoCountMode === 'single'
+          ? '写真1枚テンプレは追加準備中です。'
+          : '複数枚テンプレは追加準備中です。';
+        els.templateGrid.appendChild(empty);
+        return;
+      }
+      counts.forEach(count => {
+        const section = document.createElement('section');
+        section.className = 'template-count-section';
+        section.id = `template-count-${count}`;
+        section.innerHTML = `<h3 class="template-count-heading">写真${count}枚</h3>`;
+        const grid = document.createElement('div');
+        grid.className = 'template-group-grid';
+        visible
+          .filter(template => template.count === count)
+          .forEach(template => grid.appendChild(createTemplateCard(template)));
+        section.appendChild(grid);
+        els.templateGrid.appendChild(section);
+      });
+    }
+
+    function selectPhotoCountMode(mode) {
+      state.photoCountMode = mode;
+      renderTemplates();
+      renderInput();
+      renderPreviewControls();
+      render();
     }
 
     function scrollToStage(stage) {
@@ -2330,7 +2497,15 @@
       });
     }
 
-    els.toInputBtn.addEventListener('click', () => setStage('input'));
+    els.singlePhotoModeBtn.addEventListener('click', () => selectPhotoCountMode('single'));
+    els.multiPhotoModeBtn.addEventListener('click', () => selectPhotoCountMode('multi'));
+    els.toInputBtn.addEventListener('click', () => {
+      if (!visibleTemplates().length) {
+        showToast('この枚数のテンプレは追加準備中です');
+        return;
+      }
+      setStage('input');
+    });
     els.backTemplatesBtn.addEventListener('click', () => setStage('templates'));
     els.changeTemplateBtn.addEventListener('click', () => setStage('templates'));
     els.previewTemplateBtn.addEventListener('click', () => setStage('templates'));
