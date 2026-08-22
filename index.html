@@ -330,6 +330,23 @@
 
     .template-card.is-selected .template-selected-label { display: inline-flex; }
 
+    .template-new-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ff5fab, #ff8cc9);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .02em;
+      box-shadow: 0 8px 18px rgba(231, 91, 159, .28);
+    }
+
     .template-info {
       padding: 12px 4px 2px;
     }
@@ -415,6 +432,39 @@
     .upload-list {
       display: grid;
       gap: 12px;
+    }
+
+    .template-option-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .template-option-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .template-option-row input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    .template-option-row small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
     }
 
     .bulk-upload {
@@ -1157,6 +1207,11 @@
           <div id="uploadList" class="upload-list"></div>
         </div>
 
+        <div id="templateOptionSection" class="section-card template-option-section" hidden>
+          <div class="section-title-row"><span class="mini-step">2</span><h3>テンプレ設定</h3></div>
+          <div id="templateOptionList" class="template-option-list"></div>
+        </div>
+
         <div id="textInputSection" class="section-card text-slot-section" hidden>
           <div class="section-title-row"><span class="mini-step">2</span><h3>文字を入れる</h3></div>
           <div id="textInputList" class="text-slot-list"></div>
@@ -1298,6 +1353,143 @@
         ]
       },
       {
+        id: 'wavy-frame',
+        name: 'なみなみフレーム',
+        description: '写真1枚と色を選べるなみなみ',
+        count: 1,
+        addedAt: '2026-08-23',
+        src: 'assets/templates/template-wavy-frame-mask.jpg',
+        maskSrc: 'assets/templates/template-wavy-frame-mask.jpg',
+        renderMode: 'colorGuide',
+        basePhotoIndex: 0,
+        guideColors: [
+          { id: 'wavyBlue', kind: 'color', slotId: 'wavyColor', target: [15, 160, 224], tolerance: 95, fallbackColor: '#ffffff' }
+        ],
+        guideLayers: [
+          { id: 'wavyBlue', kind: 'color', slotId: 'wavyColor', fallbackColor: '#ffffff' }
+        ],
+        colorSlots: [
+          {
+            id: 'wavyColor',
+            label: 'なみなみ部分の色',
+            defaultColor: '#ffffff',
+            defaultOpacity: 1,
+            note: '青で示した部分の色と透明度を変えられます'
+          }
+        ]
+      },
+      {
+        id: 'square-title-message',
+        name: '四角タイトル&メッセージフレーム',
+        description: '写真1枚と上下の四角を色変更',
+        count: 1,
+        addedAt: '2026-08-23',
+        src: 'assets/templates/template-square-title-message-mask.jpg',
+        maskSrc: 'assets/templates/template-square-title-message-mask.jpg',
+        renderMode: 'colorGuide',
+        basePhotoIndex: 0,
+        options: [
+          {
+            id: 'squareSameColor',
+            label: '上下の四角を同じ色にする',
+            note: 'OFFにすると、上の四角と下の四角を別々に変えられます。',
+            defaultValue: true
+          }
+        ],
+        guideColors: [
+          { id: 'squareTop', kind: 'color', slotId: 'squareTopColor', target: [15, 160, 224], tolerance: 95, fallbackColor: '#ffffff', region: { x: 0, y: 0, width: 720, height: 420 } },
+          { id: 'squareBottom', kind: 'color', slotId: 'squareBottomColor', target: [15, 160, 224], tolerance: 95, fallbackColor: '#ffffff', region: { x: 0, y: 640, width: 720, height: 640 } }
+        ],
+        guideLayers: [
+          { id: 'squareTop', kind: 'color', slotId: 'squareTopColor', groupId: 'squareRects', fallbackColor: '#ffffff' },
+          { id: 'squareBottom', kind: 'color', slotId: 'squareBottomColor', groupId: 'squareRects', fallbackColor: '#ffffff' }
+        ],
+        colorSlots: [
+          {
+            id: 'squareSharedColor',
+            groupId: 'squareRects',
+            label: '上下の四角の色',
+            defaultColor: '#ffffff',
+            defaultOpacity: 1,
+            note: '青で示した上下の四角を同じ色で変えられます'
+          },
+          {
+            id: 'squareTopColor',
+            groupId: 'squareRects',
+            variant: 'separate',
+            label: '上の四角の色',
+            defaultColor: '#ffffff',
+            defaultOpacity: 1,
+            note: '上の青い四角の色と透明度を変えられます'
+          },
+          {
+            id: 'squareBottomColor',
+            groupId: 'squareRects',
+            variant: 'separate',
+            label: '下の四角の色',
+            defaultColor: '#ffffff',
+            defaultOpacity: 1,
+            note: '下の青い四角の色と透明度を変えられます'
+          }
+        ]
+      },
+      {
+        id: 'hand-heart-frame',
+        name: '手書きハートフレーム',
+        description: '写真1枚と色を選べるハート',
+        count: 1,
+        addedAt: '2026-08-23',
+        src: 'assets/templates/template-hand-heart-frame-mask.jpg',
+        maskSrc: 'assets/templates/template-hand-heart-frame-mask.jpg',
+        renderMode: 'colorGuide',
+        basePhotoIndex: 0,
+        guideColors: [
+          { id: 'handHeartBlue', kind: 'color', slotId: 'handHeartColor', target: [15, 160, 224], tolerance: 95, fallbackColor: '#f47bb8' },
+          { id: 'handHeartWhite', kind: 'solid', target: [255, 255, 255], tolerance: 80, color: '#ffffff' }
+        ],
+        guideLayers: [
+          { id: 'handHeartBlue', kind: 'color', slotId: 'handHeartColor', fallbackColor: '#f47bb8' },
+          { id: 'handHeartWhite', kind: 'solid', color: '#ffffff' }
+        ],
+        colorSlots: [
+          {
+            id: 'handHeartColor',
+            label: 'ハート外側の色',
+            defaultColor: '#f47bb8',
+            defaultOpacity: 0.6,
+            note: '青で示した部分の色と透明度を変えられます'
+          }
+        ]
+      },
+      {
+        id: 'cloud-frame',
+        name: 'もくもくフレーム',
+        description: '写真1枚と色を選べるもくもく',
+        count: 1,
+        addedAt: '2026-08-23',
+        src: 'assets/templates/template-cloud-frame-mask.jpg',
+        maskSrc: 'assets/templates/template-cloud-frame-mask.jpg',
+        renderMode: 'colorGuide',
+        basePhotoIndex: 0,
+        guideColors: [
+          { id: 'cloudBlue', kind: 'color', slotId: 'cloudColor', target: [15, 160, 224], tolerance: 95, fallbackColor: '#ffffff' },
+          { id: 'cloudWhite', kind: 'solid', target: [255, 255, 255], tolerance: 80, color: '#ffffff' }
+        ],
+        guideLayers: [
+          { id: 'cloudBlue', kind: 'color', slotId: 'cloudColor', fallbackColor: '#ffffff' },
+          { id: 'cloudWhite', kind: 'solid', color: '#ffffff' }
+        ],
+        colorSlots: [
+          {
+            id: 'cloudColor',
+            label: 'もくもく部分の色',
+            defaultColor: '#ffffff',
+            defaultOpacity: 0.6,
+            note: '青で示した部分の色と透明度を変えられます'
+          }
+        ]
+      },
+      {
         id: 'movie',
         name: '映画風',
         description: 'フィルム風に写真3枚と色を選べる',
@@ -1368,6 +1560,8 @@
       selectedTemplateName: document.getElementById('selectedTemplateName'),
       bulkPhotoInput: document.getElementById('bulkPhotoInput'),
       uploadList: document.getElementById('uploadList'),
+      templateOptionSection: document.getElementById('templateOptionSection'),
+      templateOptionList: document.getElementById('templateOptionList'),
       textInputSection: document.getElementById('textInputSection'),
       textInputList: document.getElementById('textInputList'),
       colorInputSection: document.getElementById('colorInputSection'),
@@ -1414,6 +1608,7 @@
       texts: {},
       colors: {},
       opacities: {},
+      options: {},
       colorSamplers: {},
       photoCountMode: 'multi',
       samplerModal: null,
@@ -1451,9 +1646,44 @@
       });
     }
 
+    function ensureTemplateOptions() {
+      const template = currentTemplate();
+      const options = template.options || [];
+      options.forEach(option => {
+        if (typeof state.options[option.id] !== 'boolean') {
+          state.options[option.id] = Boolean(option.defaultValue);
+        }
+      });
+      Object.keys(state.options).forEach(key => {
+        if (!options.some(option => option.id === key)) delete state.options[key];
+      });
+    }
+
+    function templateOptionEnabled(optionId) {
+      const option = (currentTemplate().options || []).find(item => item.id === optionId);
+      return state.options[optionId] ?? Boolean(option?.defaultValue);
+    }
+
+    function activeColorSlots(template = currentTemplate()) {
+      const slots = template.colorSlots || [];
+      if (template.id === 'square-title-message') {
+        return templateOptionEnabled('squareSameColor')
+          ? slots.filter(slot => slot.id === 'squareSharedColor')
+          : slots.filter(slot => slot.variant === 'separate');
+      }
+      return slots.filter(slot => slot.variant !== 'separate');
+    }
+
+    function colorSlotIdForLayer(layer, template = currentTemplate()) {
+      if (template.id === 'square-title-message' && layer.groupId === 'squareRects' && templateOptionEnabled('squareSameColor')) {
+        return 'squareSharedColor';
+      }
+      return layer.slotId;
+    }
+
     function ensureColorSlots() {
       const template = currentTemplate();
-      const colorSlots = template.colorSlots || [];
+      const colorSlots = activeColorSlots(template);
       colorSlots.forEach(slot => {
         if (typeof state.colors[slot.id] !== 'string') {
           state.colors[slot.id] = slot.defaultColor || '#ffffff';
@@ -1506,6 +1736,14 @@
       return templates.filter(templateMatchesPhotoMode);
     }
 
+    function isTemplateNew(template) {
+      if (!template.addedAt) return false;
+      const added = new Date(`${template.addedAt}T00:00:00+09:00`);
+      if (Number.isNaN(added.getTime())) return false;
+      const daysSinceAdded = (Date.now() - added.getTime()) / 86400000;
+      return daysSinceAdded >= 0 && daysSinceAdded < 14;
+    }
+
     function ensureVisibleTemplateSelection() {
       const visible = visibleTemplates();
       if (!visible.length) return;
@@ -1513,6 +1751,7 @@
         state.templateId = visible[0].id;
         ensurePhotoSlots();
         ensureTextSlots();
+        ensureTemplateOptions();
         ensureColorSlots();
       }
     }
@@ -1524,6 +1763,7 @@
       card.innerHTML = `
         <div class="template-thumb">
           <img src="${template.src}" alt="${template.name}の見本" />
+          ${isTemplateNew(template) ? '<span class="template-new-label">NEW</span>' : ''}
           <span class="template-count">写真${template.count}枚</span>
           <span class="template-selected-label">選択中</span>
         </div>
@@ -1535,6 +1775,7 @@
       card.addEventListener('click', () => {
         state.templateId = template.id;
         ensurePhotoSlots();
+        ensureTemplateOptions();
         ensureColorSlots();
         renderTemplates();
         renderInput();
@@ -1636,6 +1877,7 @@
       const template = currentTemplate();
       ensurePhotoSlots();
       ensureTextSlots();
+      ensureTemplateOptions();
       ensureColorSlots();
       els.selectedTemplateName.textContent = `${template.name}（写真${template.count}枚）`;
       els.uploadList.innerHTML = '';
@@ -1656,9 +1898,53 @@
         input.addEventListener('change', event => loadPhoto(index, event.target.files?.[0]));
         els.uploadList.appendChild(label);
       });
+      renderTemplateOptions();
       renderTextInputs();
       els.colorInputSection.hidden = true;
       els.colorInputList.innerHTML = '';
+    }
+
+    function copyColorState(fromId, toId) {
+      if (typeof state.colors[fromId] === 'string') state.colors[toId] = state.colors[fromId];
+      if (typeof state.opacities[fromId] === 'number') state.opacities[toId] = state.opacities[fromId];
+    }
+
+    function syncSquareColorOption(isSameColor) {
+      if (currentTemplate().id !== 'square-title-message') return;
+      if (isSameColor) {
+        copyColorState('squareTopColor', 'squareSharedColor');
+      } else {
+        copyColorState('squareSharedColor', 'squareTopColor');
+        copyColorState('squareSharedColor', 'squareBottomColor');
+      }
+      ensureColorSlots();
+    }
+
+    function renderTemplateOptions() {
+      const template = currentTemplate();
+      const options = template.options || [];
+      els.templateOptionSection.hidden = options.length === 0;
+      els.templateOptionList.innerHTML = '';
+      options.forEach(option => {
+        const label = document.createElement('label');
+        label.className = 'template-option-row';
+        label.innerHTML = `
+          <input type="checkbox" ${templateOptionEnabled(option.id) ? 'checked' : ''} data-template-option="${option.id}" />
+          <span>
+            ${escapeHtml(option.label)}
+            <small>${escapeHtml(option.note || '')}</small>
+          </span>
+        `;
+        const input = label.querySelector('input');
+        input.addEventListener('change', event => {
+          state.options[option.id] = event.target.checked;
+          if (option.id === 'squareSameColor') syncSquareColorOption(event.target.checked);
+          renderTemplateOptions();
+          renderColorInputs(els.previewColorInputSection, els.previewColorInputList);
+          render();
+        });
+        els.templateOptionList.appendChild(label);
+      });
     }
 
     function renderTextInputs() {
@@ -1695,7 +1981,7 @@
     }
 
     function renderColorInputs(section, list) {
-      const colorSlots = currentTemplate().colorSlots || [];
+      const colorSlots = activeColorSlots();
       section.hidden = colorSlots.length === 0;
       list.innerHTML = '';
       colorSlots.forEach(slot => {
@@ -1768,7 +2054,7 @@
 
     function currentSamplerSlot() {
       const slotId = state.samplerModal?.slotId;
-      return (currentTemplate().colorSlots || []).find(slot => slot.id === slotId);
+      return activeColorSlots().find(slot => slot.id === slotId);
     }
 
     function openSamplerModal(slotId) {
@@ -2002,10 +2288,12 @@
       state.texts = {};
       state.colors = {};
       state.opacities = {};
+      state.options = {};
       state.colorSamplers = {};
       state.activePhoto = 0;
       ensurePhotoSlots();
       ensureTextSlots();
+      ensureTemplateOptions();
       ensureColorSlots();
     }
 
@@ -2227,6 +2515,16 @@
         : clamp(value, 0, 1);
     }
 
+    function isInsideGuideRegion(def, x, y) {
+      if (!def.region) return true;
+      const width = def.region.width ?? canvas.width;
+      const height = def.region.height ?? canvas.height;
+      return x >= (def.region.x ?? 0)
+        && x < (def.region.x ?? 0) + width
+        && y >= (def.region.y ?? 0)
+        && y < (def.region.y ?? 0) + height;
+    }
+
     async function getHeartMessageMasks(template) {
       if (template.maskCache) return template.maskCache;
       const image = await loadImage(template.maskSrc || template.src);
@@ -2327,6 +2625,7 @@
         let bestDistance = Infinity;
 
         template.guideColors.forEach(def => {
+          if (!isInsideGuideRegion(def, x, y)) return;
           const distance = colorDistance(r, g, b, def.target);
           if (distance < bestDistance) {
             bestDistance = distance;
@@ -2376,9 +2675,10 @@
           }
         }
         if (layer.kind === 'color') {
-          const alpha = colorSlotAlpha(template, layer.slotId, 1);
+          const slotId = colorSlotIdForLayer(layer, template);
+          const alpha = colorSlotAlpha(template, slotId, 1);
           const color = colorWithOpacity(
-            state.colors[layer.slotId] || layer.fallbackColor || '#000000',
+            state.colors[slotId] || layer.fallbackColor || '#000000',
             alpha
           );
           drawSolidThroughMask(mask.canvas, color);
@@ -2538,6 +2838,7 @@
 
     renderTemplates();
     ensurePhotoSlots();
+    ensureTemplateOptions();
     ensureColorSlots();
     setStage('templates', false);
     loadImage(currentTemplate().src).then(render);

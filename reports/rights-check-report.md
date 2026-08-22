@@ -1,6 +1,6 @@
 # 権利リスクチェック レポート
 
-生成日時: 2026-08-09T03:24:36.834Z
+生成日時: 2026-08-22T18:46:16.500Z
 
 | file | metadata | risk | canPublish | humanReview | reasons | recommendation |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -8,9 +8,13 @@ assets/fv.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br
 assets/templates/template-1.jpg | yes | low | yes | no | reviewed medium signal: バーコード<br>metadata present<br>no high-risk flags<br>original / owned source | publish ok
 assets/templates/template-3.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source | publish ok
 assets/templates/template-4.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source | publish ok
+assets/templates/template-cloud-frame-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
 assets/templates/template-collage.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source | publish ok
 assets/templates/template-film.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source | publish ok
+assets/templates/template-hand-heart-frame-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
 assets/templates/template-heart-message-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
 assets/templates/template-movie-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
 assets/templates/template-polaroid-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source | publish ok
+assets/templates/template-square-title-message-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
+assets/templates/template-wavy-frame-mask.jpg | yes | low | yes | no | metadata present<br>no high-risk flags<br>original / owned source<br>color customizable | publish ok
 index.html public text | yes | low | yes | no | no risky wording detected in public page text | publish ok
